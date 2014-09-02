@@ -3,7 +3,7 @@
 
 use cgmath;
 use cgmath::FixedArray;
-use cgmath::{Matrix, Matrix4, Point3, Vector3};
+use cgmath::{Matrix, Matrix4, Point3, Vector3, Vector4};
 use cgmath::Point as CgPoint;
 use cgmath::{Transform, AffineMatrix3};
 use cgmath::Vector;
@@ -60,11 +60,14 @@ struct Vertex {
 // see how it's used.
 #[shader_param(Batch)]
 struct Params {
-    #[name = "u_Transform"]
-    transform: [[f32, ..4], ..4],
+    #[name = "u_Projection"]
+    projection: [[f32, ..4], ..4],
 
-    #[name = "u_ModelPos"]
-    model_pos: [f32, ..3],
+    #[name = "u_View"]
+    view: [[f32, ..4], ..4],
+
+    #[name = "u_Model"]
+    model: [[f32, ..4], ..4],
 
    #[name = "u_Color"]
     color: [f32, ..3],
@@ -79,15 +82,14 @@ GLSL_150: b"
 
     smooth out vec4 v_Color;
 
-    uniform mat4 u_Transform;
-    uniform mat4 u_Transform;
-    uniform vec3 u_ModelPos;
+    uniform mat4 u_Projection;
+    uniform mat4 u_View;
+    uniform mat4 u_Model;
     uniform vec3 u_Color;
 
     void main() {
         v_Color = vec4(u_Color, 1.0);
-        vec3 pos = u_ModelPos + a_Pos;
-        gl_Position = u_Transform * vec4(pos, 1.0);
+        gl_Position = u_Projection * u_View * u_Model * vec4(a_Pos, 1.0);
     }
 "
 };
@@ -108,8 +110,8 @@ GLSL_150: b"
 struct Renderer<C : device::draw::CommandBuffer, D: gfx::Device<C>> {
     graphics: gfx::Graphics<D, C>,
     tile_batch: Batch,
-    proj : Matrix4<f32>,
-    transform : Matrix4<f32>,
+    projection: Matrix4<f32>,
+    view: Matrix4<f32>,
     frame: gfx::Frame,
     cd: gfx::ClearData,
 }
@@ -215,8 +217,8 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
             graphics: graphics,
             frame: frame,
             tile_batch : tile,
-            proj: proj,
-            transform: proj,
+            projection: proj,
+            view: proj,
             cd: gfx::ClearData {
                 color: Some(clear_color),
                 depth: Some(1.0),
@@ -226,16 +228,18 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
     }
 
     fn render_params(&self, px : f32, py : f32, pz : f32, color : Color) -> Params {
+        let mut model = Matrix4::identity();
+        model[3] = Vector4::new(px, py, pz, 1.0f32);
         Params {
-            transform: self.transform.into_fixed(),
+            projection: self.projection.into_fixed(),
+            view: self.view.into_fixed(),
             color : color,
-            model_pos : [px, py, pz]
+            model: model.into_fixed(),
         }
     }
 
     fn set_view(&mut self, view: &AffineMatrix3<f32>) {
-
-        self.transform = self.proj.mul_m(&view.mat);
+        self.view = view.mat;
     }
 
     /// Clear
