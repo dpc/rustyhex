@@ -2,6 +2,18 @@ language: rust
 env:
   global:
     - secure: k1VDWI/vJTz18Di6LcrtKYl1l5cQ2Xwzi2wbkWoHDU5iPx6c5zBEEqCL3sA+Wag04KOMByli0jRpi0eKDveDKKFmUNJzrfz8Ckg3PWKrTyDD5joo+fqn0DFuXf4JpGO5aB6d1yfm4PDtl9U7szQlY+pZPY22HWFT8wW98/0USHE=
+before_install:
+  - sudo apt-get update
+install:
+  - sudo apt-get install -y cmake
+  - sudo apt-get install -y libXxf86vm-dev xorg-dev libglu1-mesa-dev
+  # glfw3
+  - git clone https://github.com/glfw/glfw.git
+  - cd glfw
+  - git checkout 3.0.3
+  - cmake -DCMAKE_C_FLAGS=-fPIC -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF .
+  - sudo make install
+  - cd ..
 script:
   - make
 after_script:
