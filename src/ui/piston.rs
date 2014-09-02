@@ -80,6 +80,7 @@ GLSL_150: b"
     smooth out vec4 v_Color;
 
     uniform mat4 u_Transform;
+    uniform mat4 u_Transform;
     uniform vec3 u_ModelPos;
     uniform vec3 u_Color;
 
@@ -123,6 +124,7 @@ static floor_color : Color = [1.0f32, 0.9, 0.9];
 static scout_color : Color = [0.0f32, 0.8, 0.0];
 static grunt_color : Color = [0.0f32, 0.6, 0.0];
 static heavy_color : Color = [0.0f32, 0.4, 0.0];
+static tile_hight : f32 = 0.2f32;
 static hack_player_knows_all : bool = false;
 static hack_player_sees_everyone : bool = false;
 
@@ -161,22 +163,39 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
 
         let (w, h) = (frame.width, frame.height);
 
-        let vertex_data = Vec::from_fn(6, |i| {
+        let vertex_data = Vec::from_fn(12, |i| {
 
             let angle = i as f32 * tau / 6.0f32;
 
             let px = tile_outer_r * angle.cos();
             let py = tile_outer_r * - angle.sin();
-            Vertex { pos: [px, py, 0f32] }
+            Vertex { pos: [px, py, if i < 6 { tile_hight } else {0f32} ] }
         });
 
         let mesh = device.create_mesh(vertex_data);
 
-        let index_data: Vec<u8> = vec!(5, 4, 3, 2, 1, 0);
+        let index_data: Vec<u8> = vec!(
+            5, 4, 3,
+            5, 3, 2,
+            5, 2, 1,
+            5, 1, 0,
+            6, 0, 1,
+            7, 6, 1,
+            7, 1, 2,
+            8, 7, 2,
+            8, 2, 3,
+            9, 8, 3,
+            9, 3, 4,
+            10, 9, 4,
+            10, 4, 5,
+            11, 10,5,
+            11, 5, 0,
+            6, 11, 0,
+            );
 
         let slice = {
             let buf = device.create_buffer_static(&index_data.as_slice());
-            gfx::IndexSlice8(gfx::TriangleFan, buf, 0, index_data.len() as u32)
+            gfx::IndexSlice8(gfx::TriangleList, buf, 0, index_data.len() as u32)
         };
 
         let program = device.link_program(VERTEX_SRC.clone(), FRAGMENT_SRC.clone())
@@ -232,16 +251,16 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
         self.graphics.draw(batch, params, &self.frame);
     }
 
-    pub fn render_tile(&mut self, p : Point, c : Color) {
+    pub fn render_tile(&mut self, p : Point, c : Color, elevate : bool) {
         let (px, py) = point_to_pixel(p);
-        let params = self.render_params(px, py, 0.0, c);
+        let params = self.render_params(px, py, if elevate {tile_hight} else {0.0}, c);
         let batch = self.tile_batch;
         self.render_batch(&batch, &params);
     }
 
     pub fn render_creature(&mut self, p : Point, c : Color) {
         let (px, py) = point_to_pixel(p);
-        let params = self.render_params(px, py, 0.1, c);
+        let params = self.render_params(px, py, tile_hight, c);
         let batch = self.tile_batch;
         self.render_batch(&batch, &params);
     }
@@ -434,11 +453,12 @@ impl RenderController {
         game.map.for_each_point(|ap| {
 
             if player.as_ref().map_or(true, |pl| pl.knows(ap) || hack_player_knows_all) {
-                let color = match game.map.at(ap).tiletype {
-                    Wall => wall_color,
-                    GlassWall => glasswall_color,
-                    Floor => floor_color,
-                    Sand => sand_color,
+                let tiletype = game.map.at(ap).tiletype;
+                let (color, elevate) = match tiletype {
+                    Wall => (wall_color, true),
+                    GlassWall => (glasswall_color, true),
+                    Floor => (floor_color, false),
+                    Sand => (sand_color, false),
                 };
 
                 let color = if player.as_ref().map_or(
@@ -449,7 +469,7 @@ impl RenderController {
                     color
                 };
 
-                renderer.render_tile(ap, color);
+                renderer.render_tile(ap, color, elevate);
             };
         });
 
