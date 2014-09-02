@@ -1,6 +1,6 @@
 [root]
 name = "rustyhex"
-version = "0.1.0"
+version = "0.0.3"
 dependencies = [
  "cgmath 0.0.1 (git+https://github.com/bjz/cgmath-rs#9ade4ce92d639d2a67c0932816ff26f9ec516616)",
  "gl 0.0.1 (git+https://github.com/bjz/gl-rs#8f454e6163ffbc37b542d4ce29d925df74954415)",
