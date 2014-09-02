@@ -20,7 +20,13 @@ install:
   - cd SDL2-2.0.0
   - ./configure && make && sudo make install
   - cd -
+before_script:
+  - rustc -v
+  - cargo -V
 script:
-  - make
+  - make build
+  - make doc
 after_script:
+  - cp -R target/doc doc
   - curl http://www.rust-ci.org/artifacts/put?t=$RUSTCI_TOKEN | sh
+  - rm -r doc
