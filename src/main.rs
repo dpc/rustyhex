@@ -33,11 +33,11 @@ fn start(argc: int, argv: *const *const u8) -> int {
 
 #[main]
 pub fn main() {
-    let mut ui = ui::piston::PistonUI::new();
+    let (mut ui, mut window) = ui::piston::PistonUI::new();
 
     let mut game = game::GameState::new();
 
     game.randomize_map();
 
-    ui.run(&mut game);
+    ui.run(&mut window, &mut game);
 }
