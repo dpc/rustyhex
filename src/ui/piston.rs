@@ -22,17 +22,16 @@ use hex2d::{Forward, Backward, Left, Right, Direction};
 use hex2d::{North, Position, Point};
 use input::keyboard as key;
 use map::{Wall, Sand, GlassWall, Floor};
-use piston;
 use std;
 use glfw_game_window::GameWindowGLFW as Window;
 use std::collections::{RingBuf, Deque};
 use std::num::{zero, one};
 use time;
+use glfw;
 
 use piston::{
     GameIterator,
     GameIteratorSettings,
-    GameWindowSettings,
     Render,
     Update,
     Input,
@@ -563,14 +562,22 @@ impl RenderController {
 impl PistonUI {
     pub fn new() -> PistonUI {
 
-        let window = Window::new(
-            piston::shader_version::opengl::OpenGL_3_2,
-            GameWindowSettings {
-                title: "Rustyhex".to_string(),
-                size: [800, 600],
-                fullscreen: false,
-                exit_on_esc: true
-            }
+        // TODO: Consider simplifying after
+        // https://github.com/PistonDevelopers/piston/issues/624
+        // is implemented
+        let glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
+
+        glfw.window_hint(glfw::ContextVersion(3, 2));
+        glfw.window_hint(glfw::OpenglForwardCompat(true));
+        glfw.window_hint(glfw::OpenglProfile(glfw::OpenGlCoreProfile));
+        glfw.window_hint(glfw::Samples(4));
+
+        let (window, events) = glfw
+            .create_window(800, 600, "Rustyhex", glfw::Windowed)
+            .expect("Failed to create GLFW window.");
+
+        let window = Window::from_pieces(
+            window, glfw, events, true
             );
 
         let (device, frame) = window.gfx();
