@@ -23,8 +23,8 @@ use hex2d::{North, Position, Point};
 use input::keyboard as key;
 use map::{Wall, Sand, GlassWall, Floor};
 use piston;
-use sdl2_game_window::GameWindowSDL2 as Window;
 use std;
+use glfw_game_window::GameWindowGLFW as Window;
 use std::collections::{RingBuf, Deque};
 use std::num::{zero, one};
 use time;
@@ -562,6 +562,7 @@ impl RenderController {
 
 impl PistonUI {
     pub fn new() -> PistonUI {
+
         let window = Window::new(
             piston::shader_version::opengl::OpenGL_3_2,
             GameWindowSettings {

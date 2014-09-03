@@ -18,8 +18,8 @@ git = "https://github.com/cmr/hgl-rs/"
 [dependencies.gl]
 git = "https://github.com/bjz/gl-rs"
 
-[dependencies.sdl2_game_window]
-git = "https://github.com/PistonDevelopers/sdl2_game_window"
+[dependencies.glfw_game_window]
+git = "https://github.com/PistonDevelopers/glfw_game_window"
 
 [dependencies.cgmath]
 git = "https://github.com/bjz/cgmath-rs"
