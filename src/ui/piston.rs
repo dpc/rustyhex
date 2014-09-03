@@ -98,7 +98,7 @@ static FRAGMENT_SRC: gfx::ShaderSource = shaders! {
 GLSL_150: b"
     #version 150 core
 
-    in vec4 v_Color;
+    smooth in vec4 v_Color;
     out vec4 o_Color;
 
     void main() {
