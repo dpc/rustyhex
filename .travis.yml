@@ -14,12 +14,6 @@ install:
   - cmake -DCMAKE_C_FLAGS=-fPIC -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF .
   - sudo make install
   - cd ..
-  # SDL2
-  - wget http://www.libsdl.org/release/SDL2-2.0.0.tar.gz
-  - tar -zxvf SDL2-2.0.0.tar.gz
-  - cd SDL2-2.0.0
-  - ./configure && make && sudo make install
-  - cd -
 before_script:
   - rustc -v
   - cargo -V

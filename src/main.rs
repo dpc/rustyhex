@@ -11,7 +11,7 @@ extern crate device;
 extern crate hgl;
 extern crate glfw;
 extern crate gl;
-extern crate sdl2_game_window;
+extern crate glfw_game_window;
 extern crate gfx;
 #[phase(plugin)]
 extern crate gfx_macros;
