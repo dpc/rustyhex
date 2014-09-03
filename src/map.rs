@@ -49,7 +49,7 @@ impl<'a> Tile<'a> {
 impl TileType {
     pub fn move_delay(&self) -> uint {
         match self {
-            &Sand => 6,
+            &Sand => 1,
             _ => 0
         }
     }

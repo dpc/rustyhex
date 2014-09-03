@@ -612,9 +612,8 @@ impl PistonUI {
 
     pub fn run (&mut self, window : &mut Window, game : &mut GameState) {
         let game_iter_settings = GameIteratorSettings {
-            updates_per_second: 15,
+            updates_per_second: 60,
             max_frames_per_second: 60,
-
         };
 
         game.update_player_los();

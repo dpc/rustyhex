@@ -21,6 +21,7 @@ pub struct GameState<'a> {
     pub player : Option<Weak<RefCell<Creature<'a>>>>,
     rng : rand::TaskRng,
     creatures: Creatures<'a>,
+    tick : uint,
 }
 
 #[deriving(Show)]
@@ -45,6 +46,7 @@ impl<'a> GameState<'a> {
             rng: rand::task_rng(),
             map: map,
             creatures: Vec::new(),
+            tick: 0,
         }
     }
 
@@ -104,8 +106,9 @@ impl<'a> GameState<'a> {
                     if cr.needs_action() {
                         assert!(!cr.is_player());
                         cr.update_los(&*self.map);
+                        cr.update_action(&*self.map);
                     }
-                    let action = cr.tick(&*self.map);
+                    let action = cr.tick();
                     match action {
                         Some(action) => {
                             self.perform_action(&mut *cr, action);
@@ -130,6 +133,7 @@ impl<'a> GameState<'a> {
             }
             );
         self.creatures = creatures;
+        self.tick += 1;
     }
 
     pub fn perform_action(&mut self, cr : &mut Creature, action : Action) {
@@ -200,7 +204,6 @@ impl<'a> GameState<'a> {
             let p = Point::new(width - 1, y);
             self.map.mut_at(p).tiletype = Wall;
         }
-
 
 
         for _ in range(0, area / 200) {
