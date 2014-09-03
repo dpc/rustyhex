@@ -12,8 +12,8 @@ path = "src/main.rs"
 [dependencies.piston]
 git = "https://github.com/pistondevelopers/piston/"
 
-[dependencies.hgl]
-git = "https://github.com/cmr/hgl-rs/"
+[dependencies.gfx]
+git = "https://github.com/gfx-rs/gfx-rs/"
 
 [dependencies.gl]
 git = "https://github.com/bjz/gl-rs"

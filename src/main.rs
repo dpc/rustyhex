@@ -8,7 +8,6 @@ extern crate piston;
 
 extern crate cgmath;
 extern crate device;
-extern crate hgl;
 extern crate glfw;
 extern crate gl;
 extern crate glfw_game_window;
