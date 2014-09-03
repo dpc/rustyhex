@@ -70,7 +70,7 @@ struct Params {
     model: [[f32, ..4], ..4],
 
    #[name = "u_Color"]
-    color: [f32, ..3],
+    color: [f32, ..4],
 
 }
 
@@ -85,10 +85,10 @@ GLSL_150: b"
     uniform mat4 u_Projection;
     uniform mat4 u_View;
     uniform mat4 u_Model;
-    uniform vec3 u_Color;
+    uniform vec4 u_Color;
 
     void main() {
-        v_Color = vec4(u_Color, 1.0);
+        v_Color = u_Color;
         gl_Position = u_Projection * u_View * u_Model * vec4(a_Pos, 1.0);
     }
 "
@@ -116,23 +116,23 @@ struct Renderer<C : device::draw::CommandBuffer, D: gfx::Device<C>> {
     cd: gfx::ClearData,
 }
 
-type Color = [f32, ..3];
-static background_color: Color = [0.0f32, 0.0, 0.0];
-static player_color : Color = [0.0f32, 0.0, 1.0];
-static wall_color : Color = [0.3f32, 0.2, 0.0];
-static glasswall_color : Color = [0.7f32, 0.7, 0.95];
-static sand_color : Color = [1.0f32, 1.0, 0.8];
-static floor_color : Color = [1.0f32, 0.9, 0.9];
-static scout_color : Color = [0.0f32, 0.8, 0.0];
-static grunt_color : Color = [0.0f32, 0.6, 0.0];
-static heavy_color : Color = [0.0f32, 0.4, 0.0];
+type Color = [f32, ..4];
+static background_color: Color = [0.0f32, 0.0, 0.0, 1.0];
+static player_color : Color = [0.0f32, 0.0, 1.0, 1.0];
+static wall_color : Color = [0.3f32, 0.2, 0.0, 1.0];
+static glasswall_color : Color = [0.7f32, 0.7, 0.95, 1.0];
+static sand_color : Color = [1.0f32, 1.0, 0.8, 1.0];
+static floor_color : Color = [1.0f32, 0.9, 0.9, 1.0];
+static scout_color : Color = [0.0f32, 0.8, 0.0, 1.0];
+static grunt_color : Color = [0.0f32, 0.6, 0.0, 1.0];
+static heavy_color : Color = [0.0f32, 0.4, 0.0, 1.0];
 static tile_hight : f32 = 0.2f32;
 static hack_player_knows_all : bool = false;
 static hack_player_sees_everyone : bool = false;
 
 fn grey_out(c : Color) -> Color {
-    let [r, g, b ]  = c;
-    [ r/2.0f32, g/2.0f32, b/2.0f32]
+    let [r, g, b, a]  = c;
+    [ r/2.0f32, g/2.0f32, b/2.0f32, a]
 }
 static billion : f32 = 1000000000f32;
 static tau : f32 = std::f32::consts::PI_2;
@@ -210,9 +210,6 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
         let aspect = w as f32 / h as f32;
         let proj = cgmath::perspective(cgmath::deg(45.0f32), aspect, 1.0, 100.0);
 
-        let [cr, cg, cb] = background_color;
-        let clear_color = [cr, cg, cb, 1.0f32];
-
         Renderer {
             graphics: graphics,
             frame: frame,
@@ -220,7 +217,7 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
             projection: proj,
             view: proj,
             cd: gfx::ClearData {
-                color: Some(clear_color),
+                color: Some(background_color),
                 depth: Some(1.0),
                 stencil: None,
             },
@@ -515,6 +512,7 @@ impl RenderController {
                 mix(1f32, base_color[0], f),
                 mix(0f32, base_color[1], f),
                 mix(0f32, base_color[2], f),
+                base_color[3],
             ]
         } else {
             base_color
