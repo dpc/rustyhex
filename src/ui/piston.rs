@@ -279,17 +279,17 @@ fn mix<F : FloatMath> (x : F, y : F, a : F) -> F {
     y * a + x * (one::<F>() - a)
 }
 
-struct SmoothMovement<F, T> {
+struct SmoothMovement<T> {
     destination: T,
     source: T,
     pub current: T,
-    current_duration: F,
-    duration: F,
+    current_duration: f32,
+    duration: f32,
 }
 
-impl<F : Float + FloatMath + cgmath::BaseNum, V : cgmath::Vector<F>, T : cgmath::Point<F, V>> SmoothMovement<F, T> {
+impl<V : cgmath::Vector<f32>, T : cgmath::Point<f32, V>> SmoothMovement<T> {
 
-    pub fn new(duration : F) -> SmoothMovement<F,T> {
+    pub fn new(duration : f32) -> SmoothMovement<T> {
         SmoothMovement {
             destination: cgmath::Point::origin(),
             source: cgmath::Point::origin(),
@@ -299,13 +299,15 @@ impl<F : Float + FloatMath + cgmath::BaseNum, V : cgmath::Vector<F>, T : cgmath:
         }
     }
 
-    pub fn update(&mut self, dt : F) {
+    pub fn update(&mut self, dt : f32) {
         if self.current_duration > zero() {
             self.current_duration = self.current_duration - dt;
             self.current_duration = self.current_duration.max(zero());
 
             let d = self.current_duration / self.duration;
-            self.current = self.destination.add_v(&self.destination.sub_p(&self.source).mul_s(-d * d));
+            // cos((x -1)* 3.146) / 2 + 0.5
+            let d = ((d - 1f32)* Float::pi()).cos() / 2f32 + 0.5f32;
+            self.current = self.destination.add_v(&self.destination.sub_p(&self.source).mul_s(-d));
         }
     }
 
@@ -331,8 +333,8 @@ pub struct PistonUI {
 
 pub struct RenderController {
     player_pos: Position,
-    camera_pos : SmoothMovement<f32, Point3<f32>>,
-    camera_focus : SmoothMovement<f32, Point3<f32>>,
+    camera_pos : SmoothMovement<Point3<f32>>,
+    camera_focus : SmoothMovement<Point3<f32>>,
 }
 
 pub struct InputController {
@@ -428,8 +430,8 @@ impl InputController {
 
 impl RenderController {
     fn new() -> RenderController {
-        let cp = SmoothMovement::new(3f32);
-        let cf = SmoothMovement::new(1f32);
+        let cp = SmoothMovement::new(2.5f32);
+        let cf = SmoothMovement::new(1.0f32);
         RenderController {
             player_pos: Position::new(Point::new(0,0), North),
             camera_pos: cp,
