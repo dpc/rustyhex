@@ -327,7 +327,6 @@ pub struct PistonUI {
     renderer : Renderer<GlCommandBuffer, GlDevice>,
     render_controller : RenderController,
     input_controller: InputController,
-    window : Window,
 }
 
 pub struct RenderController {
@@ -560,7 +559,7 @@ impl RenderController {
 }
 
 impl PistonUI {
-    pub fn new() -> PistonUI {
+    pub fn new() -> (PistonUI, Window) {
 
         // TODO: Consider simplifying after
         // https://github.com/PistonDevelopers/piston/issues/624
@@ -584,36 +583,54 @@ impl PistonUI {
 
         let renderer = Renderer::new(device, frame);
 
-        PistonUI {
+        (PistonUI {
             render_controller: RenderController::new(),
             input_controller: InputController::new(),
-            window: window,
             renderer: renderer,
+        }, window)
+    }
+
+    fn game_update(&mut self, game : &mut GameState) {
+        let pl = game.player.as_ref().and_then(|pl| pl.upgrade());
+        let player_needs_input = pl.as_ref().map(|pl| pl.borrow().needs_action()).unwrap_or(false);
+        if player_needs_input {
+            match self.input_controller.pop_action() {
+                Some(action) => {
+                    pl.as_ref().map(|pl| pl.borrow_mut().action_set(action));
+                },
+                _ => {
+                    return;
+                }
+            }
+        }
+        game.tick();
+        if pl.is_some() {
+            let pl = pl.unwrap();
+            self.render_controller.set_player_pos(&*pl.borrow());
         }
     }
 
-    pub fn run (&mut self, game : &mut GameState) {
+    pub fn run (&mut self, window : &mut Window, game : &mut GameState) {
         let game_iter_settings = GameIteratorSettings {
             updates_per_second: 60,
             max_frames_per_second: 60,
-
         };
 
         game.update_player_los();
-
-        let &PistonUI {
-            ref mut renderer,
-            ref mut render_controller,
-            ref mut input_controller,
-            ref mut window,
-        } = self;
-
         {
             let pl = game.player.as_ref().and_then(|pl| pl.upgrade());
             if pl.is_some() {
                 let pl = pl.unwrap();
-                render_controller.set_player_pos(&*pl.borrow());
-                render_controller.move_camera_to_destination();
+
+                self.render_controller.set_player_pos(&*pl.borrow());
+                self.render_controller.move_camera_to_destination();
+
+                let &PistonUI {
+                    ref mut renderer,
+                    ref mut render_controller,
+                    ..
+                } = self;
+
                 render_controller.update_camera(renderer);
             }
         }
@@ -622,12 +639,14 @@ impl PistonUI {
 
         let mut events = GameIterator::new(window, &game_iter_settings);
         for e in events {
-
-            let pl = game.player.as_ref().and_then(|pl| pl.upgrade());
-            let player_needs_input = pl.as_ref().map(|pl| pl.borrow().needs_action()).unwrap_or(false);
-
             match e {
                 Render(_) => {
+                    let &PistonUI {
+                        ref mut renderer,
+                        ref mut render_controller,
+                        ..
+                    } = self;
+
                     let t = time::precise_time_ns();
                     let dt = t - render_time;
                     render_time = t;
@@ -638,24 +657,11 @@ impl PistonUI {
                     renderer.end_frame();
                 },
                 Update(_) => {
-                    if player_needs_input {
-                        match input_controller.pop_action() {
-                            Some(action) => {
-                                pl.as_ref().map(|pl| pl.borrow_mut().action_set(action));
-                            },
-                            _ => {
-                                continue;
-                            }
-                        }
-                    }
-                    game.tick();
-                    if pl.is_some() {
-                        let pl = pl.unwrap();
-                        render_controller.set_player_pos(&*pl.borrow());
-                    }
+                    self.game_update(game);
                 },
                 Input(i) => {
-                    input_controller.push_input(i);
+                    self.input_controller.push_input(i);
+                    self.game_update(game);
                 }
             }
         }

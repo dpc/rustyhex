@@ -28,26 +28,18 @@ pub enum Race {
 impl Race {
     pub fn max_health(&self) -> uint {
         match *self {
-            Human => 5,
+            Human => 4,
             Scout => 2,
-            Grunt => 5,
-            Heavy => 10,
+            Grunt => 4,
+            Heavy => 8,
         }
     }
     pub fn damage(&self) -> uint {
         match *self {
-            Human => 3,
+            Human => 2,
             Scout => 1,
             Grunt => 2,
             Heavy => 3,
-        }
-    }
-    pub fn speed(&self) -> int {
-        match *self {
-            Human => 0,
-            Scout => 1,
-            Grunt => -3,
-            Heavy => -7,
         }
     }
 }
@@ -152,16 +144,6 @@ impl<'a> Creature<'a> {
         self.state.action_pre
     }
 
-    #[allow(dead_code)]
-    pub fn action_delay(&self) -> uint {
-        self.state.action_delay
-    }
-
-    #[allow(dead_code)]
-    pub fn action_total_delay(&self) -> uint {
-        self.state.action_total_delay
-    }
-
     pub fn knows(&self, p : Point) ->  bool {
         *self.state.known.at(p)
     }
@@ -185,15 +167,12 @@ impl<'a> Creature<'a> {
         self.state.action_set(action);
     }
 
-    pub fn tick(&mut self, map : &map::Map) -> Option<Action> {
+    pub fn tick(&mut self) -> Option<Action> {
+        self.state.tick()
+    }
 
-        let Creature {
-            ref mut state,
-            ref mut actor,
-            ..
-        } = *self;
-
-        state.tick(map, *&mut *actor)
+    pub fn action_done(&mut self) {
+        self.state.action_done()
     }
 
     pub fn was_attacked_ns(&self) -> u64 {
@@ -206,7 +185,7 @@ impl<'a> Creature<'a> {
     }
 
     pub fn needs_action(&self) -> bool {
-        self.state.action_delay <= 0 && !self.state.action_pre
+        self.state.action_delay == 0 && self.state.action_cur.is_none()
     }
 
     // Very hacky, recursive LoS algorithm
@@ -316,10 +295,17 @@ impl<'a> Creature<'a> {
         self.state.alive
     }
 
-    pub fn action_done(&mut self) {
-        self.state.action_done();
-    }
+    pub fn update_action(&mut self, map : &map::Map) {
 
+        let Creature {
+            ref mut state,
+            ref mut actor,
+            ..
+        } = *self;
+
+        let action = actor.get_action(map, state);
+        state.action_set(action);
+    }
 }
 
 impl CreatureState {
@@ -327,7 +313,7 @@ impl CreatureState {
         CreatureState {
             visible: map.clone(false),
             known: map.clone(false),
-            action_pre: false,
+            action_pre: true,
             action_cur: None,
             action_prev: None,
             action_total_delay: 0,
@@ -346,92 +332,66 @@ impl CreatureState {
     }
 
     pub fn action_set(&mut self, action : game::Action) {
-        self.action_prev = self.action_cur;
         self.action_cur = Some(action);
         self.action_pre = true;
 
-        self.delay_recalculate();
-    }
-
-    pub fn tick(&mut self, map : &map::Map, actor : &mut Actor) -> Option<Action> {
-
-        if self.action_delay > 0 {
-            self.action_delay = self.action_delay - 1;
-            return None
-        }
-
-        if self.action_pre {
-            self.action_pre = false;
-            Some(self.action_cur.map_or(Wait, |a| a))
-
-                // Will recalculate delay
-                // in action_done
-        } else {
-            let action = actor.get_action(map, self);
-
-            self.action_set(action);
-
-            // Recursively check
-            self.tick(map, actor)
-        }
-    }
-
-    pub fn delay_recalculate(&mut self) {
-        self.action_total_delay = self.action_delay();
+        self.action_total_delay = self.action_delay(action, true);
         self.action_delay = self.action_total_delay;
     }
 
-    pub fn action_done(&mut self) {
-        self.delay_recalculate();
+    pub fn tick(&mut self) -> Option<Action> {
+        if self.action_delay > 0 {
+            self.action_delay -= 1;
+            if self.action_delay == 0 && !self.action_pre {
+                self.action_prev = self.action_cur;
+                self.action_cur = None;
+            }
+
+            return None;
+        }
+
+        assert!(self.action_pre);
+        let action = self.action_cur.unwrap();
+        self.action_pre = false;
+
+        Some(action)
     }
 
-    fn action_delay(&self) -> uint {
-        let rubber_wait_time = 6u;
-        let speed = self.race.speed();
+    fn action_done(&mut self) {
+        self.action_total_delay = self.action_delay(self.action_cur.unwrap(), false);
+        self.action_delay = self.action_total_delay;
+        if self.action_delay > 0 {
+            self.action_pre = false;
+        } else {
+            self.action_prev = self.action_cur;
+            self.action_cur = None;
+        }
+    }
 
-        let action = self.action_cur.unwrap();
-
-        let mut delay = match action {
-            Run(_) => match self.action_prev {
-                Some(Run(_)) => 3,
-                _ => 6,
+    fn action_delay(&self, action : Action, pre : bool) -> uint {
+        let delay = match action {
+            Run(Forward)|Run(Left)|Run(Right) => match self.action_prev {
+                Some(Run(Forward))|Some(Run(Left))|Some(Run(Right)) => 0,
+                _ => if pre { 0 } else {1},
             },
-            Turn(_) => 2,
-            Move(Forward) => 8,
-            Move(Left)|Move(Right) => 9,
-            Move(Backward) => 14,
-            Melee(_) => if self.action_pre { 3 } else { 17 },
-            Wait => if self.action_pre { 1 } else { rubber_wait_time },
-            Use => 15,
-        };
-
-        delay = match action {
-            Turn(_)|Move(_) => ((delay as int) - speed) as uint,
-            _ => delay,
+            Turn(_) => 0,
+            Move(Forward) => if pre { 0 } else { 1 } ,
+            Move(Left)|Move(Right) =>  if pre { 0 } else { 1 },
+            Run(Backward) | Move(Backward) => 1,
+            Melee(_) => if pre { 0 } else { 1 },
+            Wait => 0,
+            Use => 4,
         };
 
         /* Terrain modifier */
         match action {
-            Run(_)|Move(_)|Turn(_) => {
-                delay = delay + self.pos_tiletype.move_delay();
-            }
-            _ => {}
-        };
-
-        /* If the previous action was wait
-         * the current action can be done much faster */
-        match (self.action_prev, action, self.action_pre) {
-            (Some(Wait), Wait, _) => delay,
-            (Some(Wait), Run(_), _) => delay,
-            (Some(Wait), Move(_), _) => delay,
-            (Some(Wait), _, true) => {
-                if delay < rubber_wait_time {
-                    0u
-                } else {
-                    delay - rubber_wait_time
-                }
+            Run(_)|Move(_) => {
+                delay + self.pos_tiletype.move_delay()
             },
-            _ => delay
+            Turn(_) => {
+                delay + if pre {self.pos_tiletype.move_delay() } else { 0 }
+            },
+            _ => delay,
         }
     }
 
