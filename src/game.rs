@@ -210,11 +210,11 @@ impl<'a> GameState<'a> {
             self.spawn_random(false, Scout);
         }
 
-        for _ in range(0, self.map.width() * self.map.height() / 400) {
+        for _ in range(0, area / 400) {
             self.spawn_random(false, Grunt);
         }
 
-        for _ in range(0, self.map.width() * self.map.height() / 800) {
+        for _ in range(0, area / 800) {
             self.spawn_random(false, Heavy);
         }
 
