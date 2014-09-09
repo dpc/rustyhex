@@ -3,20 +3,20 @@ name = "rustyhex"
 version = "0.0.3"
 dependencies = [
  "cgmath 0.0.1 (git+https://github.com/bjz/cgmath-rs#9ade4ce92d639d2a67c0932816ff26f9ec516616)",
- "gfx 0.1.0 (git+https://github.com/gfx-rs/gfx-rs/#6323461cdd1de8e4e1f3b32d167b6873d8341d92)",
- "gl 0.0.1 (git+https://github.com/bjz/gl-rs#398783d27696e712ad2ce237c79b2766ff2c7f7b)",
- "glfw_game_window 0.0.0 (git+https://github.com/PistonDevelopers/glfw_game_window#7b298af182d6ea7c1e5cbc3f057c475d6999de51)",
+ "gfx 0.1.0 (git+https://github.com/gfx-rs/gfx-rs/#752fee74af618800f24d008a2a3a9e70019bc3d3)",
+ "gl 0.0.1 (git+https://github.com/bjz/gl-rs#6461b7c9cdef8695b9fb4d1b6a380886475989df)",
+ "glfw_game_window 0.0.0 (git+https://github.com/PistonDevelopers/glfw_game_window#d0e54c67d91d6216d9867962e6b8072606abde4c)",
  "hex2d 0.0.2 (git+https://github.com/dpc/hex2d-rs#3cebd6fc946b39280b8103cf91c3fb113c07b952)",
- "piston 0.0.0 (git+https://github.com/pistondevelopers/piston/#c620f2ca0e9a380dd9cc681eb49242fe3664a76e)",
+ "piston 0.0.0 (git+https://github.com/pistondevelopers/piston/#9ceca770b967bc026afb2c36b3c8a2498798b879)",
 ]
 
 [[package]]
 name = "cam"
 version = "0.0.0"
-source = "git+https://github.com/pistondevelopers/cam#660d4f1f19004f0c1e3e6f8532a9f8946565f146"
+source = "git+https://github.com/pistondevelopers/cam#c9c67ae8224b9a0359e1dbc851274a3214da9afd"
 dependencies = [
- "input 0.0.0 (git+https://github.com/pistondevelopers/input#e889c04f7f832ff0365bc654e9cd0f4b5afc702d)",
- "vecmath 0.0.0 (git+https://github.com/pistondevelopers/vecmath#ce132037c294dc2d16661651a27fc23e16aef7dc)",
+ "input 0.0.0 (git+https://github.com/PistonDevelopers/input#8ff36d62bd85362555d5f2f01ca981b40491f2e0)",
+ "vecmath 0.0.0 (git+https://github.com/PistonDevelopers/vecmath#fb14c586842e7e6e93cd02bb23e3dd4bf958e594)",
 ]
 
 [[package]]
@@ -27,7 +27,7 @@ source = "git+https://github.com/bjz/cgmath-rs#9ade4ce92d639d2a67c0932816ff26f9e
 [[package]]
 name = "device"
 version = "0.1.0"
-source = "git+https://github.com/gfx-rs/gfx-rs/#6323461cdd1de8e4e1f3b32d167b6873d8341d92"
+source = "git+https://github.com/gfx-rs/gfx-rs/#752fee74af618800f24d008a2a3a9e70019bc3d3"
 dependencies = [
  "gfx_gl 0.1.0 (git+https://github.com/gfx-rs/gfx_gl.git#52bb510e9e76cd3c0aed7b6aa678c03059d630a6)",
 ]
@@ -40,11 +40,11 @@ source = "git+https://github.com/csherratt/genmesh.git#8fc064208cfed8ee0f6539862
 [[package]]
 name = "gfx"
 version = "0.1.0"
-source = "git+https://github.com/gfx-rs/gfx-rs/#6323461cdd1de8e4e1f3b32d167b6873d8341d92"
+source = "git+https://github.com/gfx-rs/gfx-rs/#752fee74af618800f24d008a2a3a9e70019bc3d3"
 dependencies = [
- "device 0.1.0 (git+https://github.com/gfx-rs/gfx-rs/#6323461cdd1de8e4e1f3b32d167b6873d8341d92)",
- "gfx_macros 0.1.0 (git+https://github.com/gfx-rs/gfx-rs/#6323461cdd1de8e4e1f3b32d167b6873d8341d92)",
- "render 0.1.0 (git+https://github.com/gfx-rs/gfx-rs/#6323461cdd1de8e4e1f3b32d167b6873d8341d92)",
+ "device 0.1.0 (git+https://github.com/gfx-rs/gfx-rs/#752fee74af618800f24d008a2a3a9e70019bc3d3)",
+ "gfx_macros 0.1.0 (git+https://github.com/gfx-rs/gfx-rs/#752fee74af618800f24d008a2a3a9e70019bc3d3)",
+ "render 0.1.0 (git+https://github.com/gfx-rs/gfx-rs/#752fee74af618800f24d008a2a3a9e70019bc3d3)",
 ]
 
 [[package]]
@@ -52,28 +52,28 @@ name = "gfx_gl"
 version = "0.1.0"
 source = "git+https://github.com/gfx-rs/gfx_gl.git#52bb510e9e76cd3c0aed7b6aa678c03059d630a6"
 dependencies = [
- "gl_generator 0.0.1 (git+https://github.com/bjz/gl-rs#398783d27696e712ad2ce237c79b2766ff2c7f7b)",
+ "gl_generator 0.0.1 (git+https://github.com/bjz/gl-rs#6461b7c9cdef8695b9fb4d1b6a380886475989df)",
 ]
 
 [[package]]
 name = "gfx_macros"
 version = "0.1.0"
-source = "git+https://github.com/gfx-rs/gfx-rs/#6323461cdd1de8e4e1f3b32d167b6873d8341d92"
+source = "git+https://github.com/gfx-rs/gfx-rs/#752fee74af618800f24d008a2a3a9e70019bc3d3"
 
 [[package]]
 name = "gl"
 version = "0.0.1"
-source = "git+https://github.com/bjz/gl-rs#398783d27696e712ad2ce237c79b2766ff2c7f7b"
+source = "git+https://github.com/bjz/gl-rs#6461b7c9cdef8695b9fb4d1b6a380886475989df"
 dependencies = [
- "gl_generator 0.0.1 (git+https://github.com/bjz/gl-rs#398783d27696e712ad2ce237c79b2766ff2c7f7b)",
+ "gl_generator 0.0.1 (git+https://github.com/bjz/gl-rs#6461b7c9cdef8695b9fb4d1b6a380886475989df)",
 ]
 
 [[package]]
 name = "gl_generator"
 version = "0.0.1"
-source = "git+https://github.com/bjz/gl-rs#398783d27696e712ad2ce237c79b2766ff2c7f7b"
+source = "git+https://github.com/bjz/gl-rs#6461b7c9cdef8695b9fb4d1b6a380886475989df"
 dependencies = [
- "khronos_api 0.0.1 (git+https://github.com/bjz/gl-rs#398783d27696e712ad2ce237c79b2766ff2c7f7b)",
+ "khronos_api 0.0.1 (git+https://github.com/bjz/gl-rs#6461b7c9cdef8695b9fb4d1b6a380886475989df)",
  "rust-xml 0.1.0 (git+https://github.com/netvl/rust-xml#418a3776922e545a7c33b1f68d9c8c513dc5c80b)",
 ]
 
@@ -83,26 +83,26 @@ version = "0.0.1"
 source = "git+https://github.com/bjz/glfw-rs#90c56d4809c115170ba3110c847253bfdc11e7ec"
 dependencies = [
  "link_glfw 0.1.0 (git+https://github.com/bjz/glfw-rs#90c56d4809c115170ba3110c847253bfdc11e7ec)",
- "semver 0.0.1 (git+https://github.com/rust-lang/semver#c78b40d7fdf8acd99b503e6ce394fbcf9eb8982f)",
+ "semver 0.0.1 (git+https://github.com/rust-lang/semver#df163f7b22686493b037eee1f1f9d1a2742f9bbe)",
 ]
 
 [[package]]
 name = "glfw_game_window"
 version = "0.0.0"
-source = "git+https://github.com/PistonDevelopers/glfw_game_window#7b298af182d6ea7c1e5cbc3f057c475d6999de51"
+source = "git+https://github.com/PistonDevelopers/glfw_game_window#d0e54c67d91d6216d9867962e6b8072606abde4c"
 dependencies = [
- "gfx 0.1.0 (git+https://github.com/gfx-rs/gfx-rs/#6323461cdd1de8e4e1f3b32d167b6873d8341d92)",
- "gl 0.0.1 (git+https://github.com/bjz/gl-rs#398783d27696e712ad2ce237c79b2766ff2c7f7b)",
+ "gfx 0.1.0 (git+https://github.com/gfx-rs/gfx-rs/#752fee74af618800f24d008a2a3a9e70019bc3d3)",
+ "gl 0.0.1 (git+https://github.com/bjz/gl-rs#6461b7c9cdef8695b9fb4d1b6a380886475989df)",
  "glfw 0.0.1 (git+https://github.com/bjz/glfw-rs#90c56d4809c115170ba3110c847253bfdc11e7ec)",
- "piston 0.0.0 (git+https://github.com/pistondevelopers/piston/#c620f2ca0e9a380dd9cc681eb49242fe3664a76e)",
+ "piston 0.0.0 (git+https://github.com/pistondevelopers/piston/#9ceca770b967bc026afb2c36b3c8a2498798b879)",
 ]
 
 [[package]]
 name = "graphics"
 version = "0.0.0"
-source = "git+https://github.com/pistondevelopers/rust-graphics#d2c6b470a5db3505e8267acd7ff1ab5f7139dc64"
+source = "git+https://github.com/pistondevelopers/rust-graphics#e73cf80d993922492bc7db5647ce0dbe01290671"
 dependencies = [
- "vecmath 0.0.0 (git+https://github.com/pistondevelopers/vecmath#ce132037c294dc2d16661651a27fc23e16aef7dc)",
+ "vecmath 0.0.0 (git+https://github.com/PistonDevelopers/vecmath#fb14c586842e7e6e93cd02bb23e3dd4bf958e594)",
 ]
 
 [[package]]
@@ -113,17 +113,17 @@ source = "git+https://github.com/dpc/hex2d-rs#3cebd6fc946b39280b8103cf91c3fb113c
 [[package]]
 name = "image"
 version = "0.0.0"
-source = "git+https://github.com/pistondevelopers/rust-image#fb3847297718a6b97b4e8f87ca7945b0ef0c310a"
+source = "git+https://github.com/pistondevelopers/rust-image#3989cc006a5afd02af01f6b1145599f2d0e16bfc"
 
 [[package]]
 name = "input"
 version = "0.0.0"
-source = "git+https://github.com/pistondevelopers/input#e889c04f7f832ff0365bc654e9cd0f4b5afc702d"
+source = "git+https://github.com/PistonDevelopers/input#8ff36d62bd85362555d5f2f01ca981b40491f2e0"
 
 [[package]]
 name = "khronos_api"
 version = "0.0.1"
-source = "git+https://github.com/bjz/gl-rs#398783d27696e712ad2ce237c79b2766ff2c7f7b"
+source = "git+https://github.com/bjz/gl-rs#6461b7c9cdef8695b9fb4d1b6a380886475989df"
 
 [[package]]
 name = "link_glfw"
@@ -138,24 +138,24 @@ source = "git+https://github.com/bjz/noise-rs#106531adf89c42fdf35ec522b9ad0b6cf1
 [[package]]
 name = "piston"
 version = "0.0.0"
-source = "git+https://github.com/pistondevelopers/piston/#c620f2ca0e9a380dd9cc681eb49242fe3664a76e"
+source = "git+https://github.com/pistondevelopers/piston/#9ceca770b967bc026afb2c36b3c8a2498798b879"
 dependencies = [
- "cam 0.0.0 (git+https://github.com/pistondevelopers/cam#660d4f1f19004f0c1e3e6f8532a9f8946565f146)",
+ "cam 0.0.0 (git+https://github.com/pistondevelopers/cam#c9c67ae8224b9a0359e1dbc851274a3214da9afd)",
  "genmesh 0.1.0 (git+https://github.com/csherratt/genmesh.git#8fc064208cfed8ee0f6539862a8065bab7319303)",
- "graphics 0.0.0 (git+https://github.com/pistondevelopers/rust-graphics#d2c6b470a5db3505e8267acd7ff1ab5f7139dc64)",
- "image 0.0.0 (git+https://github.com/pistondevelopers/rust-image#fb3847297718a6b97b4e8f87ca7945b0ef0c310a)",
- "input 0.0.0 (git+https://github.com/pistondevelopers/input#e889c04f7f832ff0365bc654e9cd0f4b5afc702d)",
+ "graphics 0.0.0 (git+https://github.com/pistondevelopers/rust-graphics#e73cf80d993922492bc7db5647ce0dbe01290671)",
+ "image 0.0.0 (git+https://github.com/pistondevelopers/rust-image#3989cc006a5afd02af01f6b1145599f2d0e16bfc)",
+ "input 0.0.0 (git+https://github.com/PistonDevelopers/input#8ff36d62bd85362555d5f2f01ca981b40491f2e0)",
  "noise-rs 0.0.1 (git+https://github.com/bjz/noise-rs#106531adf89c42fdf35ec522b9ad0b6cf1f978db)",
- "shader_version 0.0.0 (git+https://github.com/pistondevelopers/shader_version#93b7b560436016fcb75531ee95a426d1fe5748d3)",
- "vecmath 0.0.0 (git+https://github.com/pistondevelopers/vecmath#ce132037c294dc2d16661651a27fc23e16aef7dc)",
+ "shader_version 0.0.0 (git+https://github.com/pistondevelopers/shader_version#c561d15e7d3a561271222daefe073054f5d62b8c)",
+ "vecmath 0.0.0 (git+https://github.com/PistonDevelopers/vecmath#fb14c586842e7e6e93cd02bb23e3dd4bf958e594)",
 ]
 
 [[package]]
 name = "render"
 version = "0.1.0"
-source = "git+https://github.com/gfx-rs/gfx-rs/#6323461cdd1de8e4e1f3b32d167b6873d8341d92"
+source = "git+https://github.com/gfx-rs/gfx-rs/#752fee74af618800f24d008a2a3a9e70019bc3d3"
 dependencies = [
- "device 0.1.0 (git+https://github.com/gfx-rs/gfx-rs/#6323461cdd1de8e4e1f3b32d167b6873d8341d92)",
+ "device 0.1.0 (git+https://github.com/gfx-rs/gfx-rs/#752fee74af618800f24d008a2a3a9e70019bc3d3)",
 ]
 
 [[package]]
@@ -166,15 +166,15 @@ source = "git+https://github.com/netvl/rust-xml#418a3776922e545a7c33b1f68d9c8c51
 [[package]]
 name = "semver"
 version = "0.0.1"
-source = "git+https://github.com/rust-lang/semver#c78b40d7fdf8acd99b503e6ce394fbcf9eb8982f"
+source = "git+https://github.com/rust-lang/semver#df163f7b22686493b037eee1f1f9d1a2742f9bbe"
 
 [[package]]
 name = "shader_version"
 version = "0.0.0"
-source = "git+https://github.com/pistondevelopers/shader_version#93b7b560436016fcb75531ee95a426d1fe5748d3"
+source = "git+https://github.com/pistondevelopers/shader_version#c561d15e7d3a561271222daefe073054f5d62b8c"
 
 [[package]]
 name = "vecmath"
 version = "0.0.0"
-source = "git+https://github.com/pistondevelopers/vecmath#ce132037c294dc2d16661651a27fc23e16aef7dc"
+source = "git+https://github.com/PistonDevelopers/vecmath#fb14c586842e7e6e93cd02bb23e3dd4bf958e594"
 

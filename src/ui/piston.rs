@@ -23,15 +23,15 @@ use hex2d::{North, Position, Point};
 use input::keyboard as key;
 use map::{Wall, Sand, GlassWall, Floor};
 use std;
-use glfw_game_window::GameWindowGLFW as Window;
+use glfw_game_window::WindowGLFW as Window;
 use std::collections::{RingBuf, Deque};
 use std::num::{zero, one};
 use time;
 use glfw;
 
 use piston::{
-    GameIterator,
-    GameIteratorSettings,
+    EventIterator,
+    EventSettings,
     Render,
     Update,
     Input,
@@ -216,9 +216,9 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
             projection: proj,
             view: proj,
             cd: gfx::ClearData {
-                color: Some(background_color),
-                depth: Some(1.0),
-                stencil: None,
+                color: background_color,
+                depth: 1.0,
+                stencil: 0,
             },
         }
     }
@@ -240,7 +240,7 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
 
     /// Clear
     fn clear(&mut self) {
-        self.graphics.clear(self.cd, &self.frame);
+        self.graphics.clear(self.cd, gfx::Color | gfx::Depth, &self.frame);
     }
 
     fn end_frame(&mut self) {
@@ -613,7 +613,7 @@ impl PistonUI {
     }
 
     pub fn run (&mut self, window : &mut Window, game : &mut GameState) {
-        let game_iter_settings = GameIteratorSettings {
+        let event_settings = EventSettings {
             updates_per_second: 60,
             max_frames_per_second: 60,
         };
@@ -639,7 +639,7 @@ impl PistonUI {
 
         let mut render_time = time::precise_time_ns();
 
-        let mut events = GameIterator::new(window, &game_iter_settings);
+        let mut events = EventIterator::new(window, &event_settings);
         for e in events {
             match e {
                 Render(_) => {
