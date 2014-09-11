@@ -57,6 +57,7 @@ pub struct CreatureState {
     action_total_delay : uint,
     last_hit_ns: u64,
     last_attack_ns: u64,
+    death_ns: u64,
 
     pub race : Race,
     health: int,
@@ -184,6 +185,10 @@ impl<'a> Creature<'a> {
         self.state.last_attack_ns
     }
 
+    pub fn death_ns(&self) -> u64 {
+        self.state.death_ns
+    }
+
     pub fn needs_action(&self) -> bool {
         self.state.action_delay == 0 && self.state.action_cur.is_none()
     }
@@ -288,6 +293,7 @@ impl<'a> Creature<'a> {
     }
 
     fn die(&mut self) {
+        self.state.death_ns = time::precise_time_ns();
         self.state.alive = false;
     }
 
@@ -328,6 +334,7 @@ impl CreatureState {
             pos_tiletype: map.at(pos.p).tiletype,
             last_hit_ns: 0,
             last_attack_ns: 0,
+            death_ns: 0,
         }
     }
 
