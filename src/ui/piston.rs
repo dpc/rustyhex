@@ -501,12 +501,11 @@ impl RenderController {
         } = game;
 
 
-        let player = player.as_ref().and_then(|pl| pl.upgrade());
         let player = player.as_ref().and_then(|pl| pl.try_borrow());
 
         game.map.for_each_point(|ap| {
 
-            if player.as_ref().map_or(true, |pl| pl.knows(ap) || hack_player_knows_all) {
+            if player.as_ref().map_or(true, |pl| pl.knows(ap) || !pl.is_alive() || hack_player_knows_all) {
                 let tiletype = game.map.at(ap).tiletype;
                 let (color, elevate) = match tiletype {
                     Wall => (wall_color, true),
@@ -516,7 +515,7 @@ impl RenderController {
                 };
 
                 let color = if player.as_ref().map_or(
-                    false, |pl| !pl.sees(ap)
+                    false, |pl| !pl.sees(ap) && pl.is_alive()
                     ) {
                     grey_out(color)
                 } else {
@@ -527,23 +526,26 @@ impl RenderController {
             };
         });
 
-        game.map.for_each_point(|ap| {
-            if game.map.at(ap).creature.is_none()
-                || !player.as_ref().map_or(
-                    true, |pl| pl.sees(ap) || hack_player_sees_everyone
-                    ) {
-                return;
-            }
-
-            let creature = game.map.at(ap).creature.as_ref().unwrap();
+        for creature in game.creatures_iter() {
             let creature = creature.borrow();
 
-            let color = self.creature_color(&*creature);
-            renderer.render_creature(ap, color);
-        });
+            let ap = creature.pos().p;
+
+
+            if !player.as_ref().map_or(
+                    true, |pl| pl.sees(ap) || !pl.is_alive() || hack_player_sees_everyone
+                    ) {
+                continue;
+            }
+
+            match self.creature_color(&*creature) {
+                Some(color) => renderer.render_creature(ap, color),
+                None => {}
+            }
+        };
     }
 
-    fn creature_color(&self, cr : &Creature) -> Color {
+    fn creature_color(&self, cr : &Creature) -> Option<Color> {
         let now_ns = time::precise_time_ns();
         let duration_s = 0.8f32;
 
@@ -557,19 +559,39 @@ impl RenderController {
                 Human => fail!(),
             }
         };
+        let color = base_color;
 
-        let last_time_s = (now_ns - cr.was_attacked_ns()) as f32 / billion;
-        if last_time_s < duration_s {
-            let f = last_time_s / duration_s;
+        let since_s = (now_ns - cr.was_attacked_ns()) as f32 / billion;
+        let color = if since_s < duration_s {
+            let f = since_s / duration_s;
             [
-                mix(1f32, base_color[0], f),
-                mix(0f32, base_color[1], f),
-                mix(0f32, base_color[2], f),
-                base_color[3],
+                mix(1f32, color[0], f),
+                mix(0f32, color[1], f),
+                mix(0f32, color[2], f),
+                color[3],
             ]
         } else {
-            base_color
-        }
+            color
+        };
+
+        let color = if !cr.is_alive() {
+            let since_s = (now_ns - cr.death_ns()) as f32 / billion;
+            let f = since_s / duration_s;
+            if f < 1.0 {
+                Some([
+                    mix(color[0], floor_color[0], f),
+                    mix(color[1], floor_color[1], f),
+                    mix(color[2], floor_color[2], f),
+                    color[3],
+                ])
+            } else {
+                None
+            }
+        } else {
+            Some(color)
+        };
+
+        color
     }
 
     fn move_camera_to_destination(&mut self) {
@@ -646,12 +668,11 @@ impl PistonUI {
     }
 
     fn game_update(&mut self, game : &mut GameState) {
-        let pl = game.player.as_ref().and_then(|pl| pl.upgrade());
-        let player_needs_input = pl.as_ref().map(|pl| pl.borrow().needs_action()).unwrap_or(false);
+        let player_needs_input = game.player.as_ref().map(|pl| pl.borrow().needs_action()).unwrap_or(false);
         if player_needs_input {
             match self.input_controller.pop_action() {
                 Some(action) => {
-                    pl.as_ref().map(|pl| pl.borrow_mut().action_set(action));
+                    game.player.as_ref().map(|pl| pl.borrow_mut().action_set(action));
                 },
                 _ => {
                     return;
@@ -659,9 +680,9 @@ impl PistonUI {
             }
         }
         game.tick();
-        if pl.is_some() {
-            let pl = pl.unwrap();
-            self.render_controller.set_player_pos(&*pl.borrow());
+        match game.player {
+            Some(ref pl) => self.render_controller.set_player_pos(&*pl.borrow()),
+            None => {}
         }
     }
 
@@ -673,7 +694,7 @@ impl PistonUI {
 
         game.update_player_los();
         {
-            let pl = game.player.as_ref().and_then(|pl| pl.upgrade());
+            let ref pl = game.player.as_ref();
             if pl.is_some() {
                 let pl = pl.unwrap();
 
