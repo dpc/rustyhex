@@ -28,6 +28,9 @@ use std::collections::{RingBuf, Deque};
 use std::num::{zero, one};
 use time;
 use glfw;
+use obj;
+use genmesh;
+use genmesh::Indexer;
 
 use piston::{
     EventIterator,
@@ -51,6 +54,26 @@ struct Vertex {
     #[as_float]
     #[name = "a_Pos"]
     pos: [f32, ..3],
+
+    #[as_float]
+    #[name = "a_Normal"]
+    normal: [f32, ..3],
+}
+
+impl std::cmp::PartialEq for Vertex {
+    fn eq(&self, other: &Vertex) -> bool {
+        self.pos.as_slice() == other.pos.as_slice() &&
+        self.normal.as_slice() == other.normal.as_slice()
+    }
+}
+
+impl std::clone::Clone for Vertex {
+    fn clone(&self) -> Vertex {
+        Vertex {
+            pos: self.pos,
+            normal: self.normal
+        }
+    }
 }
 
 // The shader_param attribute makes sure the following struct can be used to
@@ -152,6 +175,55 @@ fn side_to_angle(i : uint) -> f32 {
     i as f32 * tau / 6.0f32 + tau / 12f32
 }
 
+type IndexVector = Vec<u8>;
+type VertexVector = Vec<Vertex>;
+
+pub fn load_hex() -> (IndexVector, VertexVector) {
+    let obj = obj::load(&Path::new("assets/hex.obj")).unwrap();
+
+    let mut index_data : Vec<u8> = vec!();
+    let mut vertex_data : Vec<Vertex> = vec!();
+
+    {
+        let mut indexer = genmesh::LruIndexer::new(16, |_, v| {
+            vertex_data.push(v);
+        });
+
+        for o in obj.object_iter() {
+            for g in o.group_iter() {
+                for i in g.indices().iter() {
+                    match i {
+                        &genmesh::PolyTri(poly) => {
+
+                            for i in vec!(poly.x, poly.y, poly.z).iter() {
+                                match i {
+                                    &(v, _, Some(n)) => {
+                                        let normal = obj.normal()[n];
+                                        let vertex = obj.position()[v];
+                                        let index = indexer.index(
+                                            Vertex {
+                                                pos: vertex,
+                                                normal: normal,
+                                            }
+                                            );
+                                        index_data.push(index as u8);
+                                    },
+                                    _ => { fail!() }
+                                }
+                            }
+
+
+                        },
+                        _ => { fail!() },
+                    }
+                }
+            }
+        }
+    }
+    (index_data, vertex_data)
+}
+
+
 pub fn point_to_pixel(p : Point) -> (f32, f32) {
     (
         p.x as f32 * tile_outer_r * 3f32 / 2f32,
@@ -164,35 +236,9 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
 
         let (w, h) = (frame.width, frame.height);
 
-        let vertex_data = Vec::from_fn(12, |i| {
-
-            let angle = i as f32 * tau / 6.0f32;
-
-            let px = tile_outer_r * angle.cos();
-            let py = tile_outer_r * - angle.sin();
-            Vertex { pos: [px, py, if i < 6 { tile_hight } else {0f32} ] }
-        });
+        let (index_data, vertex_data) = load_hex();
 
         let mesh = device.create_mesh(vertex_data);
-
-        let index_data: Vec<u8> = vec!(
-            5, 4, 3,
-            5, 3, 2,
-            5, 2, 1,
-            5, 1, 0,
-            6, 0, 1,
-            7, 6, 1,
-            7, 1, 2,
-            8, 7, 2,
-            8, 2, 3,
-            9, 8, 3,
-            9, 3, 4,
-            10, 9, 4,
-            10, 4, 5,
-            11, 10,5,
-            11, 5, 0,
-            6, 11, 0,
-            );
 
         let slice = {
             let buf = device.create_buffer_static(&index_data.as_slice());
