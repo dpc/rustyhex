@@ -26,3 +26,6 @@ git = "https://github.com/bjz/cgmath-rs"
 
 [dependencies.hex2d]
 git = "https://github.com/dpc/hex2d-rs"
+
+[dependencies.obj-rs]
+git = "https://github.com/csherratt/obj-rs.git"

@@ -6,6 +6,7 @@
 
 extern crate piston;
 
+extern crate debug;
 extern crate cgmath;
 extern crate device;
 extern crate glfw;
@@ -17,6 +18,8 @@ extern crate gfx_macros;
 extern crate time;
 extern crate native;
 extern crate hex2d;
+extern crate genmesh;
+extern crate "obj-rs" as obj;
 #[phase(plugin, link)] extern crate log;
 extern crate input;
 
