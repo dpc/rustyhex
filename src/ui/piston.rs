@@ -94,6 +94,8 @@ struct Params {
    #[name = "u_Color"]
     color: [f32, ..4],
 
+   #[name = "u_LightDirection"]
+    light: [f32, ..3],
 }
 
 static VERTEX_SRC: gfx::ShaderSource = shaders! {
@@ -101,6 +103,7 @@ GLSL_150: b"
     #version 150 core
 
     in vec3 a_Pos;
+    in vec3 a_Normal;
 
     smooth out vec4 v_Color;
 
@@ -108,9 +111,12 @@ GLSL_150: b"
     uniform mat4 u_View;
     uniform mat4 u_Model;
     uniform vec4 u_Color;
+    uniform vec3 u_LightDirection;
 
     void main() {
-        v_Color = u_Color;
+        vec3 normal = normalize(vec3(u_Model * vec4(a_Normal, 0.0)));
+        float dot = max(dot(normal, u_LightDirection), 0.0);
+        v_Color = u_Color * (dot + 1) / 2;
         gl_Position = u_Projection * u_View * u_Model * vec4(a_Pos, 1.0);
     }
 "
@@ -277,6 +283,7 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
             view: self.view.into_fixed(),
             color : color,
             model: model.into_fixed(),
+            light: Vector3::unit_z().into_fixed(),
         }
     }
 
