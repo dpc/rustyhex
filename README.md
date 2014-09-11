@@ -16,9 +16,9 @@ certain mechanisms that I'd like to see in roguelike game:
 
 ## Overview
 
-![RustyHex screenshot][ss04]
+![RustyHex screenshot][ss]
 
-[ss04]: http://i.imgur.com/8xJiJxq.png
+[ss]: http://i.imgur.com/BUMttnd.png
 
 ## Building
 
