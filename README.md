@@ -40,6 +40,7 @@ See `.travis.yml`
 * Press `r` to toggle between running and walking.
 * Hold `Shift` to strafe (with Left/Right move)
 * Hold `Ctrl` to attack (with a move)
+* Press `.` to wait.
 
 ## Mechanics
 
