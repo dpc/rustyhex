@@ -104,7 +104,7 @@ impl<'a> GameState<'a> {
     pub fn tick(&mut self) {
         let mut creatures = self.creatures.clone();
 
-        for creature in creatures.mut_iter() {
+        for creature in creatures.iter_mut() {
 
             match creature.borrow_mut()  {
                 mut cr => {

@@ -7,6 +7,7 @@
 extern crate piston;
 
 extern crate debug;
+extern crate event;
 extern crate cgmath;
 extern crate device;
 extern crate glfw;

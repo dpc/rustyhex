@@ -244,10 +244,10 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
 
         let (index_data, vertex_data) = load_hex();
 
-        let mesh = device.create_mesh(vertex_data);
+        let mesh = device.create_mesh(vertex_data.as_slice());
 
         let slice = {
-            let buf = device.create_buffer_static(&index_data.as_slice());
+            let buf = device.create_buffer_static(index_data.as_slice());
             gfx::IndexSlice8(gfx::TriangleList, buf, 0, index_data.len() as u32)
         };
 
@@ -643,20 +643,25 @@ impl PistonUI {
         // is implemented
         let glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
 
+        let width = 800;
+        let height = 600;
+
         glfw.window_hint(glfw::ContextVersion(3, 2));
         glfw.window_hint(glfw::OpenglForwardCompat(true));
         glfw.window_hint(glfw::OpenglProfile(glfw::OpenGlCoreProfile));
         glfw.window_hint(glfw::Samples(4));
 
         let (window, events) = glfw
-            .create_window(800, 600, "Rustyhex", glfw::Windowed)
+            .create_window(width, height, "Rustyhex", glfw::Windowed)
             .expect("Failed to create GLFW window.");
+
+        let frame = gfx::Frame::new(width as u16, height as u16);
+        let device = gfx::GlDevice::new(|s| window.get_proc_address(s));
 
         let window = Window::from_pieces(
             window, glfw, events, true
             );
 
-        let (device, frame) = window.gfx();
 
         let renderer = Renderer::new(device, frame);
 
