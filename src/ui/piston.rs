@@ -742,7 +742,13 @@ impl PistonUI {
                 },
                 Input(i) => {
                     self.input_controller.push_input(i);
-                    self.game_update(game);
+                    // vs self.input_controller.push_input(i.clone());
+                    match i {
+                        Press(Keyboard(_)) => {
+                            self.game_update(game)
+                        },
+                        _ => {}
+                    }
                 }
             }
         }
