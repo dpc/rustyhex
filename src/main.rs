@@ -6,6 +6,7 @@
 
 extern crate piston;
 
+extern crate shader_version;
 extern crate event;
 extern crate cgmath;
 extern crate device;

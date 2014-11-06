@@ -30,7 +30,7 @@ use time;
 use obj;
 use genmesh;
 use genmesh::Indexer;
-use glfw;
+use shader_version;
 
 use piston::{
     EventIterator,
@@ -38,6 +38,7 @@ use piston::{
     Render,
     Update,
     Input,
+    WindowSettings,
 };
 
 use piston::input::{
@@ -638,30 +639,22 @@ impl RenderController {
 impl PistonUI {
     pub fn new() -> (PistonUI, Window) {
 
-        // TODO: Consider simplifying after
-        // https://github.com/PistonDevelopers/piston/issues/624
-        // is implemented
-        let glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
-
         let width = 800;
         let height = 600;
 
-        glfw.window_hint(glfw::ContextVersion(3, 2));
-        glfw.window_hint(glfw::OpenglForwardCompat(true));
-        glfw.window_hint(glfw::OpenglProfile(glfw::OpenGlCoreProfile));
-        glfw.window_hint(glfw::Samples(4));
-
-        let (window, events) = glfw
-            .create_window(width, height, "Rustyhex", glfw::Windowed)
-            .expect("Failed to create GLFW window.");
-
-        let frame = gfx::Frame::new(width as u16, height as u16);
-        let device = gfx::GlDevice::new(|s| window.get_proc_address(s));
-
-        let window = Window::from_pieces(
-            window, glfw, events, true
+        let window = Window::new(
+            shader_version::opengl::OpenGL_3_2,
+            WindowSettings {
+                title: "Rustyhex".to_string(),
+                size: [width, height],
+                fullscreen: false,
+                exit_on_esc: true,
+                samples: 4,
+            }
             );
 
+        let frame = gfx::Frame::new(width as u16, height as u16);
+        let device = gfx::GlDevice::new(|s| window.window.get_proc_address(s));
 
         let renderer = Renderer::new(device, frame);
 
