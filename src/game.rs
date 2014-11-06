@@ -15,14 +15,14 @@ use std::rc::{Rc};
 use std::vec::Vec;
 use std::slice::Items;
 
-pub type CreatureRef<'a> = Rc<RefCell<Creature<'a>>>;
-pub type Creatures<'a> = Vec<CreatureRef<'a>>;
+pub type CreatureRef = Rc<RefCell<Creature>>;
+pub type Creatures = Vec<CreatureRef>;
 
-pub struct GameState<'a> {
-    pub map : Box<Map<'a>>,
-    pub player : Option<CreatureRef<'a>>,
+pub struct GameState {
+    pub map : Box<Map>,
+    pub player : Option<CreatureRef>,
     rng : rand::TaskRng,
-    creatures: Creatures<'a>,
+    creatures: Creatures,
     tick : uint,
 }
 
@@ -36,8 +36,8 @@ pub enum Action {
     Wait
 }
 
-impl<'a> GameState<'a> {
-    pub fn new() -> GameState<'a> {
+impl GameState {
+    pub fn new() -> GameState {
         let map = box hex2d::Map::new(100, 100, Tile {
             tiletype: Floor,
             creature: None,
@@ -52,23 +52,23 @@ impl<'a> GameState<'a> {
         }
     }
 
-    fn spawn(&mut self, cr : Box<Creature>) -> Option<Rc<RefCell<Creature>>>  {
+    fn spawn(&mut self, cr : Creature) -> Option<Rc<RefCell<Creature>>>  {
         if !self.map.at(*cr.p()).is_passable() {
-            return None;
+            None
+        } else {
+            let p = *cr.p();
+            let pl = Rc::new(RefCell::new(cr));
+            self.map.mut_at(p).creature = Some(pl.clone());
+            self.creatures.push(pl.clone());
+            Some(pl.clone())
         }
-
-        let p = *cr.p();
-        let pl = Rc::new(RefCell::new(*cr));
-        self.map.mut_at(p).creature = Some(pl.clone());
-        self.creatures.push(pl.clone());
-        Some(pl.clone())
     }
 
 
     fn spawn_random(&mut self, player : bool, race : Race) -> Rc<RefCell<Creature>> {
         loop {
             let pos = self.map.wrap(self.rng.gen::<Position>());
-            let cr = box Creature::new(&*self.map, pos, player, race);
+            let cr = Creature::new(&*self.map, pos, player, race);
             match self.spawn(cr) {
                 Some(cr) => return cr,
                 None => {}
@@ -135,7 +135,7 @@ impl<'a> GameState<'a> {
         cr.pos_prev_set(&*self.map, old_pos);
 
         match action {
-            Turn(Forward)|Turn(Backward) => fail!("Illegal move"),
+            Turn(Forward)|Turn(Backward) => panic!("Illegal move"),
             Move(dir)|Run(dir) => {
                 let pos = Position{ p: self.map.wrap(cr.p() + (cr.pos().dir + dir)), dir: cr.pos().dir };
                 self.move_creature_if_possible(cr, pos)

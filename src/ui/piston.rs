@@ -23,14 +23,14 @@ use hex2d::{North, Position, Point};
 use input::keyboard as key;
 use map::{Wall, Sand, GlassWall, Floor};
 use std;
-use glfw_game_window::WindowGLFW as Window;
-use std::collections::{RingBuf, Deque};
+use glfw_window::GlfwWindow as Window;
+use std::collections::{RingBuf};
 use std::num::{zero, one};
 use time;
-use glfw;
 use obj;
 use genmesh;
 use genmesh::Indexer;
+use glfw;
 
 use piston::{
     EventIterator,
@@ -145,40 +145,40 @@ struct Renderer<C : device::draw::CommandBuffer, D: gfx::Device<C>> {
 }
 
 type Color = [f32, ..4];
-static background_color: Color = [0.0f32, 0.0, 0.0, 1.0];
-static player_color : Color = [0.0f32, 0.0, 1.0, 1.0];
-static wall_color : Color = [0.3f32, 0.2, 0.0, 1.0];
-static glasswall_color : Color = [0.7f32, 0.7, 0.95, 1.0];
-static sand_color : Color = [1.0f32, 1.0, 0.8, 1.0];
-static floor_color : Color = [1.0f32, 0.9, 0.9, 1.0];
-static scout_color : Color = [0.0f32, 0.8, 0.0, 1.0];
-static grunt_color : Color = [0.0f32, 0.6, 0.0, 1.0];
-static heavy_color : Color = [0.0f32, 0.4, 0.0, 1.0];
-static tile_hight : f32 = 0.2f32;
-static hack_player_knows_all : bool = false;
-static hack_player_sees_everyone : bool = false;
+static BACKGROUND_COLOR: Color = [0.0f32, 0.0, 0.0, 1.0];
+static PLAYER_COLOR : Color = [0.0f32, 0.0, 1.0, 1.0];
+static WALL_COLOR : Color = [0.3f32, 0.2, 0.0, 1.0];
+static GLASSWALL_COLOR : Color = [0.7f32, 0.7, 0.95, 1.0];
+static SAND_COLOR : Color = [1.0f32, 1.0, 0.8, 1.0];
+static FLOOR_COLOR : Color = [1.0f32, 0.9, 0.9, 1.0];
+static SCOUT_COLOR : Color = [0.0f32, 0.8, 0.0, 1.0];
+static GRUNT_COLOR : Color = [0.0f32, 0.6, 0.0, 1.0];
+static HEAVY_COLOR : Color = [0.0f32, 0.4, 0.0, 1.0];
+static TILE_HEIGHT : f32 = 0.2f32;
+static HACK_PLAYER_KNOWS_ALL : bool = false;
+static HACK_PLAYER_SEES_EVERYONE : bool = false;
 
 fn grey_out(c : Color) -> Color {
     let [r, g, b, a]  = c;
     [ r/2.0f32, g/2.0f32, b/2.0f32, a]
 }
-static billion : f32 = 1000000000f32;
-static tau : f32 = std::f32::consts::PI_2;
-static tile_outer_r : f32 = 1.0f32;
-//static tile_inner_r : f32 = tile_outer_r * 3f32.sqrt() / 2f32;
+static BILLION : f32 = 1000000000f32;
+static TAU : f32 = std::f32::consts::PI_2;
+static TILE_OUTER_R : f32 = 1.0f32;
+//static tile_inner_r : f32 = TILE_OUTER_R * 3f32.sqrt() / 2f32;
 
 fn tile_inner_r() -> f32 {
-    tile_outer_r * 3f32.sqrt() / 2f32
+    TILE_OUTER_R * 3f32.sqrt() / 2f32
 }
 
 #[allow(dead_code)]
 fn edge_to_angle(i : uint) -> f32 {
-    i as f32 * tau / 6.0f32
+    i as f32 * TAU / 6.0f32
 }
 
 #[allow(dead_code)]
 fn side_to_angle(i : uint) -> f32 {
-    i as f32 * tau / 6.0f32 + tau / 12f32
+    i as f32 * TAU / 6.0f32 + TAU / 12f32
 }
 
 type IndexVector = Vec<u8>;
@@ -214,13 +214,13 @@ pub fn load_hex() -> (IndexVector, VertexVector) {
                                             );
                                         index_data.push(index as u8);
                                     },
-                                    _ => { fail!() }
+                                    _ => { panic!() }
                                 }
                             }
 
 
                         },
-                        _ => { fail!() },
+                        _ => { panic!() },
                     }
                 }
             }
@@ -232,7 +232,7 @@ pub fn load_hex() -> (IndexVector, VertexVector) {
 
 pub fn point_to_pixel(p : Point) -> (f32, f32) {
     (
-        p.x as f32 * tile_outer_r * 3f32 / 2f32,
+        p.x as f32 * TILE_OUTER_R * 3f32 / 2f32,
         -((p.y * 2) as f32 + p.x as f32) * tile_inner_r()
     )
 }
@@ -268,7 +268,7 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
             projection: proj,
             view: proj,
             cd: gfx::ClearData {
-                color: background_color,
+                color: BACKGROUND_COLOR,
                 depth: 1.0,
                 stencil: 0,
             },
@@ -293,7 +293,7 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
 
     /// Clear
     fn clear(&mut self) {
-        self.graphics.clear(self.cd, gfx::Color | gfx::Depth, &self.frame);
+        self.graphics.clear(self.cd, gfx::COLOR | gfx::DEPTH, &self.frame);
     }
 
     fn end_frame(&mut self) {
@@ -306,14 +306,14 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
 
     pub fn render_tile(&mut self, p : Point, c : Color, elevate : bool) {
         let (px, py) = point_to_pixel(p);
-        let params = self.render_params(px, py, if elevate {tile_hight} else {0.0}, c);
+        let params = self.render_params(px, py, if elevate {TILE_HEIGHT} else {0.0}, c);
         let batch = self.tile_batch;
         self.render_batch(&batch, &params);
     }
 
     pub fn render_creature(&mut self, p : Point, c : Color) {
         let (px, py) = point_to_pixel(p);
-        let params = self.render_params(px, py, tile_hight, c);
+        let params = self.render_params(px, py, TILE_HEIGHT, c);
         let batch = self.tile_batch;
         self.render_batch(&batch, &params);
     }
@@ -505,13 +505,13 @@ impl RenderController {
 
         game.map.for_each_point(|ap| {
 
-            if player.as_ref().map_or(true, |pl| pl.knows(ap) || !pl.is_alive() || hack_player_knows_all) {
+            if player.as_ref().map_or(true, |pl| pl.knows(ap) || !pl.is_alive() || HACK_PLAYER_KNOWS_ALL) {
                 let tiletype = game.map.at(ap).tiletype;
                 let (color, elevate) = match tiletype {
-                    Wall => (wall_color, true),
-                    GlassWall => (glasswall_color, true),
-                    Floor => (floor_color, false),
-                    Sand => (sand_color, false),
+                    Wall => (WALL_COLOR, true),
+                    GlassWall => (GLASSWALL_COLOR, true),
+                    Floor => (FLOOR_COLOR, false),
+                    Sand => (SAND_COLOR, false),
                 };
 
                 let color = if player.as_ref().map_or(
@@ -533,7 +533,7 @@ impl RenderController {
 
 
             if !player.as_ref().map_or(
-                    true, |pl| pl.sees(ap) || !pl.is_alive() || hack_player_sees_everyone
+                    true, |pl| pl.sees(ap) || !pl.is_alive() || HACK_PLAYER_SEES_EVERYONE
                     ) {
                 continue;
             }
@@ -550,18 +550,18 @@ impl RenderController {
         let duration_s = 0.8f32;
 
         let base_color = if cr.is_player() {
-            player_color
+            PLAYER_COLOR
         } else {
             match cr.race() {
-                Scout => scout_color,
-                Grunt => grunt_color,
-                Heavy => heavy_color,
-                Human => fail!(),
+                Scout => SCOUT_COLOR,
+                Grunt => GRUNT_COLOR,
+                Heavy => HEAVY_COLOR,
+                Human => panic!(),
             }
         };
         let color = base_color;
 
-        let since_s = (now_ns - cr.was_attacked_ns()) as f32 / billion;
+        let since_s = (now_ns - cr.was_attacked_ns()) as f32 / BILLION;
         let color = if since_s < duration_s {
             let f = since_s / duration_s;
             [
@@ -575,13 +575,13 @@ impl RenderController {
         };
 
         let color = if !cr.is_alive() {
-            let since_s = (now_ns - cr.death_ns()) as f32 / billion;
+            let since_s = (now_ns - cr.death_ns()) as f32 / BILLION;
             let f = since_s / duration_s;
             if f < 1.0 {
                 Some([
-                    mix(color[0], floor_color[0], f),
-                    mix(color[1], floor_color[1], f),
-                    mix(color[2], floor_color[2], f),
+                    mix(color[0], FLOOR_COLOR[0], f),
+                    mix(color[1], FLOOR_COLOR[1], f),
+                    mix(color[2], FLOOR_COLOR[2], f),
                     color[3],
                 ])
             } else {
@@ -731,7 +731,7 @@ impl PistonUI {
                     let t = time::precise_time_ns();
                     let dt = t - render_time;
                     render_time = t;
-                    render_controller.update_movement(dt as f32 / billion as f32);
+                    render_controller.update_movement(dt as f32 / BILLION as f32);
                     render_controller.update_camera(renderer);
                     renderer.clear();
                     render_controller.render_map(renderer, game);

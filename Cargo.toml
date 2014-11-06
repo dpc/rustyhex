@@ -18,8 +18,11 @@ git = "https://github.com/gfx-rs/gfx-rs/"
 [dependencies.gl]
 git = "https://github.com/bjz/gl-rs"
 
-[dependencies.glfw_game_window]
-git = "https://github.com/PistonDevelopers/glfw_game_window"
+[dev_dependencies.glfw]
+git = "https://github.com/bjz/glfw-rs.git"
+
+[dependencies.glfw_window]
+git = "https://github.com/PistonDevelopers/glfw_window"
 
 [dependencies.cgmath]
 git = "https://github.com/bjz/cgmath-rs"

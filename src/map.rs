@@ -18,12 +18,12 @@ pub enum TileType {
 }
 
 #[deriving(Clone)]
-pub struct Tile<'a> {
+pub struct Tile {
     pub tiletype : TileType,
-    pub creature : Option<Rc<RefCell<Creature<'a>>>>,
+    pub creature : Option<Rc<RefCell<Creature>>>,
 }
 
-impl<'a> Tile<'a> {
+impl Tile {
     pub fn opaqueness(&self) -> uint {
         let o = match self.tiletype {
             Wall => 1000000,
@@ -55,4 +55,4 @@ impl TileType {
     }
 }
 
-pub type Map<'a> = hex2d::Map<Tile<'a>>;
+pub type Map = hex2d::Map<Tile>;

@@ -6,13 +6,12 @@
 
 extern crate piston;
 
-extern crate debug;
 extern crate event;
 extern crate cgmath;
 extern crate device;
 extern crate glfw;
 extern crate gl;
-extern crate glfw_game_window;
+extern crate glfw_window;
 extern crate gfx;
 #[phase(plugin)]
 extern crate gfx_macros;

@@ -68,13 +68,13 @@ pub struct CreatureState {
     pos_tiletype : TileType,
 }
 
-pub struct Creature<'a> {
+pub struct Creature {
     state : CreatureState,
-    actor : Box<Actor + 'a>,
+    actor : Box<Actor+'static>,
 }
 
-impl<'a> Creature<'a> {
-    pub fn new(map : &map::Map, pos : Position, player : bool, race : Race) -> Creature<'a> {
+impl Creature {
+    pub fn new(map : &map::Map, pos : Position, player : bool, race : Race) -> Creature {
         Creature {
             state: CreatureState::new(map, pos, player, race),
             actor: box AIActor::new(),
