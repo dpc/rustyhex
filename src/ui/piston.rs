@@ -339,47 +339,32 @@ fn mix<F : FloatMath> (x : F, y : F, a : F) -> F {
 
 struct SmoothMovement<T> {
     destination: T,
-    source: T,
+    //velocity: T,
     pub current: T,
-    current_duration: f32,
-    duration: f32,
 }
 
-impl<V : cgmath::Vector<f32>, T : cgmath::Point<f32, V>> SmoothMovement<T> {
+impl<V : cgmath::EuclideanVector<f32>, T : cgmath::Point<f32, V>> SmoothMovement<T> {
 
-    pub fn new(duration : f32) -> SmoothMovement<T> {
+    pub fn new() -> SmoothMovement<T> {
         SmoothMovement {
             destination: cgmath::Point::origin(),
-            source: cgmath::Point::origin(),
-            current:  cgmath::Point::origin(),
-            duration: duration,
-            current_duration : duration,
+            current:     cgmath::Point::origin(),
+            //velocity:    cgmath::Point::origin(),
         }
     }
 
     pub fn update(&mut self, dt : f32) {
-        if self.current_duration > zero() {
-            self.current_duration = self.current_duration - dt;
-            self.current_duration = self.current_duration.max(zero());
+        let d = self.destination.sub_p(&self.current);
 
-            let d = self.current_duration / self.duration;
-            // cos((x -1)* 3.146) / 2 + 0.5
-            let d = ((d - 1f32)* Float::pi()).cos() / 2f32 + 0.5f32;
-            self.current = self.destination.add_v(&self.destination.sub_p(&self.source).mul_s(-d));
-        }
+        self.current.add_self_v(&d.mul_s(dt));
     }
 
     pub fn set_destination(&mut self, dest : T) {
-        let current = self.current.clone();
-        self.source = current;
         self.destination = dest;
-        self.current_duration = self.duration;
     }
 
     pub fn finish_immediately(&mut self) {
-        self.current_duration = zero();
         self.current = self.destination.clone();
-        self.source = self.destination.clone();
     }
 }
 
@@ -488,8 +473,8 @@ impl InputController {
 
 impl RenderController {
     fn new() -> RenderController {
-        let cp = SmoothMovement::new(2.5f32);
-        let cf = SmoothMovement::new(1.0f32);
+        let cp = SmoothMovement::new();
+        let cf = SmoothMovement::new();
         RenderController {
             player_pos: Position::new(Point::new(0,0), North),
             camera_pos: cp,
@@ -616,11 +601,11 @@ impl RenderController {
         let (fx, fy) = point_to_coordinate(front);
         let (x, y) = point_to_coordinate(pos.p);
         let (dx, dy) = (fx - x,  fy - y);
-        let how_much_behind = 6f32;
+        let how_much_behind = 5f32;
         let how_much_front = 3f32;
         let (dbx, dby) = (dx * how_much_behind, dy * how_much_behind);
         let (dfx, dfy) = (dx * how_much_front, dy * how_much_front);
-        self.camera_pos.set_destination(Point3::new(x - dbx, y - dby, 10.0));
+        self.camera_pos.set_destination(Point3::new(x - dbx, y - dby, 8.0));
         self.camera_focus.set_destination(Point3::new(x + dfx, y + dfy, 0.0));
     }
 
