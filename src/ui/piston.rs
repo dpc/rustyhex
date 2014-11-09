@@ -671,18 +671,21 @@ impl PistonUI {
     }
 
     fn game_update(&mut self, game : &mut GameState) {
-        let player_needs_input = game.player.as_ref().map(|pl| pl.borrow().needs_action()).unwrap_or(false);
-        if player_needs_input {
-            match self.input_controller.pop_action() {
-                Some(action) => {
-                    game.player.as_ref().map(|pl| pl.borrow_mut().action_set(action));
-                },
-                _ => {
-                    return;
-                }
+        loop {
+            if game.tick() {
+                match self.input_controller.pop_action() {
+                    Some(action) => {
+                        game.player.as_ref().map(|pl| pl.borrow_mut().action_set(action));
+                    },
+                    _ => {
+                        break;
+                    }
+                };
+
+            } else {
+                break;
             }
         }
-        game.tick();
         match game.player {
             Some(ref pl) => self.render_controller.set_player_pos(&*pl.borrow()),
             None => {}
@@ -711,7 +714,7 @@ impl PistonUI {
 
         let mut render_time = time::precise_time_ns();
 
-        let mut events = Events::new(window).set(Ups(60)).set(MaxFps(60));
+        let mut events = Events::new(window).set(Ups(30)).set(MaxFps(60));
         for e in events {
             match e {
                 Render(_) => {
@@ -735,12 +738,6 @@ impl PistonUI {
                 },
                 Input(i) => {
                     self.input_controller.push_input(i.clone());
-                    match i {
-                        Press(Keyboard(_)) => {
-                            self.game_update(game)
-                        },
-                        _ => {}
-                    }
                 }
             }
         }

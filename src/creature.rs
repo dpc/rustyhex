@@ -9,7 +9,6 @@ use hex2d;
 use hex2d::{Left,Right,Forward,Backward};
 use hex2d::{Point,Position};
 use hex2d::AbsoluteDirection;
-use hex2d::Direction;
 use map;
 use map::Map;
 use map::TileType;
@@ -50,11 +49,9 @@ pub struct CreatureState {
 
     pub is_player : bool,
 
-    action_cur : Option<game::Action>,
-    action_prev : Option<game::Action>,
-    action_pre : bool,
+    action_cur : Option<Action>,
+    action_prev : Option<Action>,
     action_delay : uint,
-    action_total_delay : uint,
     last_hit_ns: u64,
     last_attack_ns: u64,
     death_ns: u64,
@@ -121,30 +118,6 @@ impl Creature {
         &self.state.pos_prev
     }
 
-    #[allow(dead_code)]
-    pub fn is_turning_rel(&self) -> Option<Direction> {
-        match self.state.action_cur {
-            Some(Turn(dir)) => Some(dir),
-            _ => None,
-        }
-    }
-
-    #[allow(dead_code)]
-    pub fn is_moving_rel(&self) -> Option<Direction> {
-        match self.state.action_cur {
-            None => None,
-            Some(action) => match action {
-                Run(rdir)|Move(rdir)|Melee(rdir) => Some(rdir),
-                _ => None
-            }
-        }
-    }
-
-    #[allow(dead_code)]
-    pub fn is_pre_action(&self) -> bool {
-        self.state.action_pre
-    }
-
     pub fn knows(&self, p : Point) ->  bool {
         *self.state.known.at(p)
     }
@@ -190,7 +163,7 @@ impl Creature {
     }
 
     pub fn needs_action(&self) -> bool {
-        self.state.action_delay == 0 && self.state.action_cur.is_none()
+        self.state.action_cur.is_none() && self.state.action_delay == 0
     }
 
     // Very hacky, recursive LoS algorithm
@@ -319,10 +292,8 @@ impl CreatureState {
         CreatureState {
             visible: map.clone(false),
             known: map.clone(false),
-            action_pre: true,
-            action_cur: None,
-            action_prev: None,
-            action_total_delay: 0,
+            action_cur : None,
+            action_prev : None,
             action_delay: 0,
             is_player: is_player,
             race: race,
@@ -340,62 +311,41 @@ impl CreatureState {
 
     pub fn action_set(&mut self, action : game::Action) {
         self.action_cur = Some(action);
-        self.action_pre = true;
-
-        self.action_total_delay = self.action_delay(action, true);
-        self.action_delay = self.action_total_delay;
     }
 
     pub fn tick(&mut self) -> Option<Action> {
         if self.action_delay > 0 {
             self.action_delay -= 1;
-            if self.action_delay == 0 && !self.action_pre {
-                self.action_prev = self.action_cur;
-                self.action_cur = None;
-            }
-
-            return None;
+            None
+        } else {
+            self.action_cur
         }
-
-        assert!(self.action_pre);
-        let action = self.action_cur.unwrap();
-        self.action_pre = false;
-
-        Some(action)
     }
 
     fn action_done(&mut self) {
-        self.action_total_delay = self.action_delay(self.action_cur.unwrap(), false);
-        self.action_delay = self.action_total_delay;
-        if self.action_delay > 0 {
-            self.action_pre = false;
-        } else {
-            self.action_prev = self.action_cur;
-            self.action_cur = None;
-        }
+        self.action_delay = self.action_delay(self.action_cur.unwrap());
+        self.action_prev = self.action_cur;
+        self.action_cur = None;
     }
 
-    fn action_delay(&self, action : Action, pre : bool) -> uint {
+    fn action_delay(&self, action : Action) -> uint {
         let delay = match action {
             Run(Forward)|Run(Left)|Run(Right) => match self.action_prev {
-                Some(Run(Forward))|Some(Run(Left))|Some(Run(Right)) => 0,
-                _ => if pre { 0 } else {1},
+                Some(Run(Forward))|Some(Run(Left))|Some(Run(Right)) => 2,
+                _ => 1,
             },
-            Turn(_) => 0,
-            Move(Forward) => if pre { 0 } else { 1 } ,
-            Move(Left)|Move(Right) =>  if pre { 0 } else { 1 },
-            Run(Backward) | Move(Backward) => 1,
-            Melee(_) => if pre { 0 } else { 1 },
-            Wait => 0,
+            Turn(_) => 1,
+            Move(Forward) => 2,
+            Move(Left)|Move(Right) => 2 ,
+            Run(Backward) | Move(Backward) => 3,
+            Melee(_) => 2,
+            Wait => 1,
         };
 
         /* Terrain modifier */
         match action {
             Run(_)|Move(_) => {
                 delay + self.pos_tiletype.move_delay()
-            },
-            Turn(_) => {
-                delay + if pre {self.pos_tiletype.move_delay() } else { 0 }
             },
             _ => delay,
         }

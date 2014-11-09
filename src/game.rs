@@ -14,6 +14,7 @@ use std::cell::{RefCell};
 use std::rc::{Rc};
 use std::vec::Vec;
 use std::slice::Items;
+use std::collections::{RingBuf};
 
 pub type CreatureRef = Rc<RefCell<Creature>>;
 pub type Creatures = Vec<CreatureRef>;
@@ -23,6 +24,7 @@ pub struct GameState {
     pub player : Option<CreatureRef>,
     rng : rand::TaskRng,
     creatures: Creatures,
+    pending_tick: RingBuf<CreatureRef>,
     tick : uint,
 }
 
@@ -32,7 +34,6 @@ pub enum Action {
     Move(Direction),
     Turn(Direction),
     Melee(Direction),
-    //Use,
     Wait
 }
 
@@ -48,11 +49,12 @@ impl GameState {
             rng: rand::task_rng(),
             map: map,
             creatures: Vec::new(),
+            pending_tick: RingBuf::new(),
             tick: 0,
         }
     }
 
-    fn spawn(&mut self, cr : Creature) -> Option<Rc<RefCell<Creature>>>  {
+    fn spawn(&mut self, cr : Creature) -> Option<CreatureRef>  {
         if !self.map.at(*cr.p()).is_passable() {
             None
         } else {
@@ -101,33 +103,58 @@ impl GameState {
         self.creatures.iter()
     }
 
-    pub fn tick(&mut self) {
+    pub fn tick(&mut self) -> bool {
         let mut creatures = self.creatures.clone();
 
-        for creature in creatures.iter_mut() {
-
-            match creature.borrow_mut()  {
-                mut cr => {
-                    if cr.is_alive() {
-                        if cr.needs_action() {
-                            assert!(!cr.is_player());
-                            cr.update_los(&*self.map);
-                            cr.update_action(&*self.map);
-                        }
-                        let action = cr.tick();
-                        match action {
-                            Some(action) => {
-                                self.perform_action(&mut *cr, action);
-                                cr.action_done();
-                            },
-                            None => {}
-                        }
-                    }
-                },
-            };
+        if self.pending_tick.is_empty() {
+            for creature in creatures.iter_mut() {
+                self.pending_tick.push_back(creature.clone());
+            }
+            self.tick += 1;
         }
 
-        self.tick += 1;
+        loop {
+            let cr = self.pending_tick.pop_front();
+            match cr {
+                None => break,
+                Some(ref cr) => {
+                    if match cr.borrow_mut() {
+                        cr => {
+                            if cr.is_alive() && cr.needs_action() && cr.is_player() {
+                                true
+                            } else {
+                                false
+                            }
+                        }
+                    } {
+                        self.pending_tick.push_front(cr.clone());
+                        return true;
+                    };
+
+                    match cr.borrow_mut()  {
+                        mut cr => {
+                            if cr.is_alive() {
+                                if cr.needs_action() {
+                                    cr.update_los(&*self.map);
+                                    assert!(!cr.is_player());
+                                    cr.update_action(&*self.map);
+                                }
+                                let action = cr.tick();
+                                match action {
+                                    Some(action) => {
+                                        self.perform_action(&mut *cr, action);
+                                        cr.action_done();
+                                    },
+                                    None => {}
+                                }
+                            }
+                        },
+                    }
+                }
+            }
+        }
+
+        false
     }
 
     pub fn perform_action(&mut self, cr : &mut Creature, action : Action) {
