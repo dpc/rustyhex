@@ -145,7 +145,7 @@ dependencies = [
 [[package]]
 name = "hex2d"
 version = "0.0.2"
-source = "git+https://github.com/dpc/hex2d-rs#700009dee6b6cdd1f5a685bac584578792fe79f5"
+source = "git+https://github.com/dpc/hex2d-rs#f648f8243fb8a2077a77fbc0d2296c572415c2ec"
 dependencies = [
  "num 0.0.1 (git+https://github.com/rust-lang/num)",
 ]

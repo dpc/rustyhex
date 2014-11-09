@@ -3,7 +3,8 @@
 
 use cgmath;
 use cgmath::FixedArray;
-use cgmath::{Matrix, Matrix4, Point3, Vector3, Vector4};
+use cgmath::{Matrix, Matrix4, Matrix3, Point3, Vector3, Vector4, ToMatrix4};
+use cgmath::rad;
 use cgmath::Point as CgPoint;
 use cgmath::{Transform, AffineMatrix3};
 use cgmath::Vector;
@@ -18,7 +19,7 @@ use game::GameState;
 use game::{Run, Move, Turn, Melee, Wait};
 use gfx;
 use gfx::{Device, DeviceHelper};
-use hex2d::{Forward, Backward, Left, Right, Direction};
+use hex2d::{Forward, Backward, Left, Right, Direction, AbsoluteDirection};
 use hex2d::{North, Position, Point};
 use input::keyboard as key;
 use map::{Wall, Sand, GlassWall, Floor};
@@ -145,6 +146,7 @@ GLSL_150: b"
 struct Renderer<C : device::draw::CommandBuffer, D: gfx::Device<C>> {
     graphics: gfx::Graphics<D, C>,
     tile_batch: Batch,
+    creature_batch: Batch,
     projection: Matrix4<f32>,
     view: Matrix4<f32>,
     frame: gfx::Frame,
@@ -188,11 +190,16 @@ fn side_to_angle(i : uint) -> f32 {
     i as f32 * TAU / 6.0f32 + TAU / 12f32
 }
 
+fn dir_to_angle(d : AbsoluteDirection) -> f32 {
+    -(d.to_uint() as f32 * TAU) / 6.0f32
+}
+
+
 type IndexVector = Vec<u8>;
 type VertexVector = Vec<Vertex>;
 
-pub fn load_hex() -> (IndexVector, VertexVector) {
-    let obj = obj::load(&Path::new("assets/hex.obj")).unwrap();
+pub fn load_hex(path : &str) -> (IndexVector, VertexVector) {
+    let obj = obj::load(&Path::new(path)).unwrap();
 
     let mut index_data : Vec<u8> = vec!();
     let mut vertex_data : Vec<Vertex> = vec!();
@@ -249,17 +256,15 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
 
         let (w, h) = (frame.width, frame.height);
 
-        let (index_data, vertex_data) = load_hex();
+        let (tile_index_data, tile_vertex_data) = load_hex("assets/hex.obj");
+        let (creature_index_data, creature_vertex_data) = load_hex("assets/creature.obj");
 
-        let mesh = device.create_mesh(vertex_data.as_slice());
+        let tile_mesh = device.create_mesh(tile_vertex_data.as_slice());
+        let creature_mesh = device.create_mesh(creature_vertex_data.as_slice());
 
-        /*
-        let slice = {
-            let buf = device.create_buffer_static(index_data.as_slice());
-            gfx::IndexSlice8(gfx::TriangleList, buf, 0, index_data.len() as u32)
-        };*/
-
-        let slice = device.create_buffer_static::<u8>(index_data.as_slice())
+        let tile_slice = device.create_buffer_static::<u8>(tile_index_data.as_slice())
+            .to_slice(gfx::TriangleList);
+        let creature_slice = device.create_buffer_static::<u8>(creature_index_data.as_slice())
             .to_slice(gfx::TriangleList);
 
         let program = device.link_program(VERTEX_SRC.clone(), FRAGMENT_SRC.clone())
@@ -267,7 +272,8 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
         let state = gfx::DrawState::new().depth(gfx::state::LessEqual, true).multi_sample();
 
         let mut graphics = gfx::Graphics::new(device);
-        let tile : Batch = graphics.make_batch(&program, &mesh, slice, &state).unwrap();
+        let tile : Batch = graphics.make_batch(&program, &tile_mesh, tile_slice, &state).unwrap();
+        let creature : Batch = graphics.make_batch(&program, &creature_mesh, creature_slice, &state).unwrap();
 
         let aspect = w as f32 / h as f32;
         let proj = cgmath::perspective(cgmath::deg(45.0f32), aspect, 1.0, 100.0);
@@ -276,6 +282,7 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
             graphics: graphics,
             frame: frame,
             tile_batch : tile,
+            creature_batch : creature,
             projection: proj,
             view: proj,
             cd: gfx::ClearData {
@@ -286,9 +293,16 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
         }
     }
 
-    fn render_params(&self, px : f32, py : f32, pz : f32, color : Color) -> Params {
+    fn render_params(&self, px : f32, py : f32, pz : f32, rotation : f32, color : Color) -> Params {
         let mut model = Matrix4::identity();
         model[3] = Vector4::new(px, py, pz, 1.0f32);
+
+        let rot  = Matrix3::from_angle_z(rad(rotation)).to_matrix4();
+//
+//model = rot.rotate_vector(&model);
+
+        let model = model.mul_m(&rot);
+
         Params {
             projection: self.projection.into_fixed(),
             view: self.view.into_fixed(),
@@ -317,15 +331,15 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
 
     pub fn render_tile(&mut self, p : Point, c : Color, elevate : bool) {
         let (px, py) = point_to_coordinate(p);
-        let params = self.render_params(px, py, if elevate {TILE_HEIGHT} else {0.0}, c);
+        let params = self.render_params(px, py, if elevate {TILE_HEIGHT} else {0.0}, 0.0, c);
         let batch = self.tile_batch;
         self.render_batch(&batch, &params);
     }
 
-    pub fn render_creature(&mut self, p : Point, c : Color) {
-        let (px, py) = point_to_coordinate(p);
-        let params = self.render_params(px, py, TILE_HEIGHT, c);
-        let batch = self.tile_batch;
+    pub fn render_creature(&mut self, pos : Position, c : Color) {
+        let (px, py) = point_to_coordinate(pos.p);
+        let params = self.render_params(px, py, TILE_HEIGHT, dir_to_angle(pos.dir), c);
+        let batch = self.creature_batch;
         self.render_batch(&batch, &params);
     }
 }
@@ -531,7 +545,7 @@ impl RenderController {
             }
 
             match self.creature_color(&*creature) {
-                Some(color) => renderer.render_creature(ap, color),
+                Some(color) => renderer.render_creature(*creature.pos(), color),
                 None => {}
             }
         };
