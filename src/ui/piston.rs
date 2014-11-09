@@ -32,13 +32,17 @@ use genmesh;
 use genmesh::Indexer;
 use shader_version;
 
+use gfx::ToSlice;
 use piston::{
-    EventIterator,
-    EventSettings,
+    Events,
     Render,
     Update,
     Input,
     WindowSettings,
+};
+
+use event::{
+    Ups, MaxFps,
 };
 
 use piston::input::{
@@ -99,7 +103,7 @@ struct Params {
     light: [f32, ..3],
 }
 
-static VERTEX_SRC: gfx::ShaderSource = shaders! {
+static VERTEX_SRC: gfx::ShaderSource<'static> = shaders! {
 GLSL_150: b"
     #version 150 core
 
@@ -123,7 +127,7 @@ GLSL_150: b"
 "
 };
 
-static FRAGMENT_SRC: gfx::ShaderSource = shaders! {
+static FRAGMENT_SRC: gfx::ShaderSource<'static> = shaders! {
 GLSL_150: b"
     #version 150 core
 
@@ -231,7 +235,7 @@ pub fn load_hex() -> (IndexVector, VertexVector) {
 }
 
 
-pub fn point_to_pixel(p : Point) -> (f32, f32) {
+pub fn point_to_coordinate(p : Point) -> (f32, f32) {
     (
         p.x as f32 * TILE_OUTER_R * 3f32 / 2f32,
         -((p.y * 2) as f32 + p.x as f32) * tile_inner_r()
@@ -247,10 +251,14 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
 
         let mesh = device.create_mesh(vertex_data.as_slice());
 
+        /*
         let slice = {
             let buf = device.create_buffer_static(index_data.as_slice());
             gfx::IndexSlice8(gfx::TriangleList, buf, 0, index_data.len() as u32)
-        };
+        };*/
+
+        let slice = device.create_buffer_static::<u8>(index_data.as_slice())
+            .to_slice(gfx::TriangleList);
 
         let program = device.link_program(VERTEX_SRC.clone(), FRAGMENT_SRC.clone())
             .unwrap();
@@ -306,26 +314,22 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
     }
 
     pub fn render_tile(&mut self, p : Point, c : Color, elevate : bool) {
-        let (px, py) = point_to_pixel(p);
+        let (px, py) = point_to_coordinate(p);
         let params = self.render_params(px, py, if elevate {TILE_HEIGHT} else {0.0}, c);
         let batch = self.tile_batch;
         self.render_batch(&batch, &params);
     }
 
     pub fn render_creature(&mut self, p : Point, c : Color) {
-        let (px, py) = point_to_pixel(p);
+        let (px, py) = point_to_coordinate(p);
         let params = self.render_params(px, py, TILE_HEIGHT, c);
         let batch = self.tile_batch;
         self.render_batch(&batch, &params);
     }
-
-
 }
 
 
 /// linearly interpolate between two values
-///
-/// s =
 fn mix<F : FloatMath> (x : F, y : F, a : F) -> F {
     assert!(a >= zero());
     assert!(a <= one());
@@ -420,19 +424,19 @@ impl InputController {
 
     fn push_move_or_run(&mut self, dir : Direction) {
         let a = self.move_or_run(dir);
-        self.action_queue.push(a)
+        self.action_queue.push_back(a)
     }
 
     fn push_turn(&mut self, dir : Direction) {
-        self.action_queue.push(Turn(dir))
+        self.action_queue.push_back(Turn(dir))
     }
 
     fn push_melee(&mut self, dir : Direction) {
-        self.action_queue.push(Melee(dir))
+        self.action_queue.push_back(Melee(dir))
     }
 
     fn push_wait(&mut self) {
-        self.action_queue.push(Wait)
+        self.action_queue.push_back(Wait)
     }
 
     pub fn push_input(&mut self, i : InputEvent) {
@@ -609,8 +613,8 @@ impl RenderController {
 
         let front = pos.p + pos.dir;
 
-        let (fx, fy) = point_to_pixel(front);
-        let (x, y) = point_to_pixel(pos.p);
+        let (fx, fy) = point_to_coordinate(front);
+        let (x, y) = point_to_coordinate(pos.p);
         let (dx, dy) = (fx - x,  fy - y);
         let how_much_behind = 6f32;
         let how_much_front = 3f32;
@@ -684,12 +688,7 @@ impl PistonUI {
         }
     }
 
-    pub fn run (&mut self, window : &mut Window, game : &mut GameState) {
-        let event_settings = EventSettings {
-            updates_per_second: 60,
-            max_frames_per_second: 60,
-        };
-
+    pub fn run (&mut self, window : Window, game : &mut GameState) {
         game.update_player_los();
         {
             let ref pl = game.player.as_ref();
@@ -711,7 +710,7 @@ impl PistonUI {
 
         let mut render_time = time::precise_time_ns();
 
-        let mut events = EventIterator::new(window, &event_settings);
+        let mut events = Events::new(window)/*.set(Ups(60)).set(MaxFps(60))*/;
         for e in events {
             match e {
                 Render(_) => {

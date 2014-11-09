@@ -137,15 +137,15 @@ impl GameState {
         match action {
             Turn(Forward)|Turn(Backward) => panic!("Illegal move"),
             Move(dir)|Run(dir) => {
-                let pos = Position{ p: self.map.wrap(cr.p() + (cr.pos().dir + dir)), dir: cr.pos().dir };
+                let pos = Position{ p: self.map.wrap(*cr.p() + (cr.pos().dir + dir)), dir: cr.pos().dir };
                 self.move_creature_if_possible(cr, pos)
             },
             Turn(dir) => {
-                let pos = self.map.wrap(cr.pos() + dir);
+                let pos = self.map.wrap(*cr.pos() + dir);
                 self.move_creature_if_possible(cr, pos)
             },
             Melee(dir) => {
-                let target_p = self.map.wrap(cr.p() + (cr.pos().dir + dir));
+                let target_p = self.map.wrap(*cr.p() + (cr.pos().dir + dir));
                 let target = self.map.mut_at(target_p).creature.as_ref().
                     map(|cr| cr.clone());
                 if target.is_some() {
@@ -179,7 +179,7 @@ impl GameState {
             };
 
             self.map.mut_at(p).tiletype = t;
-            for &dir in hex2d::all_directions.iter() {
+            for &dir in hex2d::ALL_DIRECTIONS.iter() {
                 let p = self.map.wrap(p + dir);
                 self.map.mut_at(p).tiletype = t;
             }

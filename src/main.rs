@@ -6,6 +6,7 @@
 
 extern crate piston;
 
+extern crate current;
 extern crate shader_version;
 extern crate event;
 extern crate cgmath;
@@ -37,11 +38,11 @@ fn start(argc: int, argv: *const *const u8) -> int {
 
 #[main]
 pub fn main() {
-    let (mut ui, mut window) = ui::piston::PistonUI::new();
+    let (mut ui, window) = ui::piston::PistonUI::new();
 
     let mut game = game::GameState::new();
 
     game.randomize_map();
 
-    ui.run(&mut window, &mut game);
+    ui.run(window, &mut game);
 }
