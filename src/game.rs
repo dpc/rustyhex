@@ -32,7 +32,7 @@ pub enum Action {
     Move(Direction),
     Turn(Direction),
     Melee(Direction),
-    Use,
+    //Use,
     Wait
 }
 

@@ -4,7 +4,7 @@
 use ai::{Actor,AIActor};
 use game;
 use game::Action;
-use game::{Melee,Turn,Move,Run,Wait,Use};
+use game::{Melee,Turn,Move,Run,Wait};
 use hex2d;
 use hex2d::{Left,Right,Forward,Backward};
 use hex2d::{Point,Position};
@@ -387,7 +387,6 @@ impl CreatureState {
             Run(Backward) | Move(Backward) => 1,
             Melee(_) => if pre { 0 } else { 1 },
             Wait => 0,
-            Use => 4,
         };
 
         /* Terrain modifier */
