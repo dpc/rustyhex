@@ -40,10 +40,12 @@ use piston::{
     Input,
     WindowSettings,
 };
-/* TODO:FIXME:
+
+use current::Set;
+
 use event::{
     Ups, MaxFps,
-};*/
+};
 
 use piston::input::{
     InputEvent,
@@ -695,7 +697,7 @@ impl PistonUI {
 
         let mut render_time = time::precise_time_ns();
 
-        let mut events = Events::new(window)/*.set(Ups(60)).set(MaxFps(60))*/;
+        let mut events = Events::new(window).set(Ups(60)).set(MaxFps(60));
         for e in events {
             match e {
                 Render(_) => {
