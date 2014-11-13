@@ -195,11 +195,11 @@ impl GameState {
         let width = self.map.width() as int;
         let area = width * height;
 
-        for _ in range(0, area / 12) {
+        for _ in range(0, area / 8) {
             let p = self.rng.gen::<Point>();
             let p = self.map.wrap(p);
 
-            let t = match self.rng.gen_range(0u, 6) {
+            let t = match self.rng.gen_range(0u, 20) {
                 0 => GlassWall,
                 1 => Sand,
                 _ => Wall

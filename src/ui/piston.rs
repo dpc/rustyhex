@@ -124,7 +124,7 @@ GLSL_150: b"
     void main() {
         vec3 normal = normalize(vec3(u_Model * vec4(a_Normal, 0.0)));
         float dot = max(dot(normal, u_LightDirection), 0.0);
-        v_Color = u_Color * (dot + 1) / 2;
+        v_Color = u_Color * (dot + 2) / 3;
         gl_Position = u_Projection * u_View * u_Model * vec4(a_Pos, 1.0);
     }
 "
@@ -163,13 +163,13 @@ static FLOOR_COLOR : Color = [1.0f32, 0.9, 0.9, 1.0];
 static SCOUT_COLOR : Color = [0.0f32, 0.8, 0.0, 1.0];
 static GRUNT_COLOR : Color = [0.0f32, 0.6, 0.0, 1.0];
 static HEAVY_COLOR : Color = [0.0f32, 0.4, 0.0, 1.0];
-static TILE_HEIGHT : f32 = 0.2f32;
+static WALL_HEIGHT : f32 = 0.3f32;
 static HACK_PLAYER_KNOWS_ALL : bool = false;
 static HACK_PLAYER_SEES_EVERYONE : bool = false;
 
 fn grey_out(c : Color) -> Color {
     let [r, g, b, a]  = c;
-    [ r/2.0f32, g/2.0f32, b/2.0f32, a]
+    [ (r+0.4f32)/4.0f32, (g + 0.4f32)/4.0f32, (b + 0.4f32)/4.0f32, a]
 }
 static BILLION : f32 = 1000000000f32;
 static TAU : f32 = std::f32::consts::PI_2;
@@ -193,7 +193,6 @@ fn side_to_angle(i : uint) -> f32 {
 fn dir_to_angle(d : AbsoluteDirection) -> f32 {
     -(d.to_uint() as f32 * TAU) / 6.0f32
 }
-
 
 type IndexVector = Vec<u8>;
 type VertexVector = Vec<Vertex>;
@@ -331,14 +330,14 @@ impl<C : CommandBuffer, D: gfx::Device<C>> Renderer<C, D> {
 
     pub fn render_tile(&mut self, p : Point, c : Color, elevate : bool) {
         let (px, py) = point_to_coordinate(p);
-        let params = self.render_params(px, py, if elevate {TILE_HEIGHT} else {0.0}, 0.0, c);
+        let params = self.render_params(px, py, if elevate {WALL_HEIGHT} else {0.0}, 0.0, c);
         let batch = self.tile_batch;
         self.render_batch(&batch, &params);
     }
 
     pub fn render_creature(&mut self, pos : Position, c : Color) {
         let (px, py) = point_to_coordinate(pos.p);
-        let params = self.render_params(px, py, TILE_HEIGHT, dir_to_angle(pos.dir), c);
+        let params = self.render_params(px, py, 0.3, dir_to_angle(pos.dir), c);
         let batch = self.creature_batch;
         self.render_batch(&batch, &params);
     }
@@ -354,25 +353,25 @@ fn mix<F : FloatMath> (x : F, y : F, a : F) -> F {
 }
 
 struct SmoothMovement<T> {
+    speed : f32,
     destination: T,
-    //velocity: T,
     pub current: T,
 }
 
 impl<V : cgmath::EuclideanVector<f32>, T : cgmath::Point<f32, V>> SmoothMovement<T> {
 
-    pub fn new() -> SmoothMovement<T> {
+    pub fn new(speed : f32) -> SmoothMovement<T> {
         SmoothMovement {
+            speed: speed,
             destination: cgmath::Point::origin(),
             current:     cgmath::Point::origin(),
-            //velocity:    cgmath::Point::origin(),
         }
     }
 
     pub fn update(&mut self, dt : f32) {
         let d = self.destination.sub_p(&self.current);
 
-        self.current.add_self_v(&d.mul_s(dt));
+        self.current.add_self_v(&d.mul_s(dt * self.speed));
     }
 
     pub fn set_destination(&mut self, dest : T) {
@@ -489,8 +488,8 @@ impl InputController {
 
 impl RenderController {
     fn new() -> RenderController {
-        let cp = SmoothMovement::new();
-        let cf = SmoothMovement::new();
+        let cp = SmoothMovement::new(1.0f32);
+        let cf = SmoothMovement::new(2.0f32);
         RenderController {
             player_pos: Position::new(Point::new(0,0), North),
             camera_pos: cp,
@@ -511,7 +510,7 @@ impl RenderController {
 
         game.map.for_each_point(|ap| {
 
-            if player.as_ref().map_or(true, |pl| pl.knows(ap) || !pl.is_alive() || HACK_PLAYER_KNOWS_ALL) {
+            if player.as_ref().map_or(true, |pl| pl.knows(ap) || HACK_PLAYER_KNOWS_ALL) {
                 let tiletype = game.map.at(ap).tiletype;
                 let (color, elevate) = match tiletype {
                     Wall => (WALL_COLOR, true),
@@ -539,7 +538,7 @@ impl RenderController {
 
 
             if !player.as_ref().map_or(
-                    true, |pl| pl.sees(ap) || !pl.is_alive() || HACK_PLAYER_SEES_EVERYONE
+                    true, |pl| pl.sees(ap) || HACK_PLAYER_SEES_EVERYONE
                     ) {
                 continue;
             }
@@ -714,7 +713,7 @@ impl PistonUI {
 
         let mut render_time = time::precise_time_ns();
 
-        let mut events = Events::new(window).set(Ups(30)).set(MaxFps(60));
+        let mut events = Events::new(window).set(Ups(60)).set(MaxFps(60));
         for e in events {
             match e {
                 Render(_) => {
