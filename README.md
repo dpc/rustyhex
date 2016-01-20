@@ -22,7 +22,7 @@ certain mechanisms that I'd like to see in roguelike game:
 
 I am not actively working on this project as I lack skill and time to
 develop satisfying OpenGL UI. [rhex][rhex] is the primary place where
-I work on this idea.
+I work on the ideas of hexagonal roguelike.
 
 I'm still interested in PRs or even completely handing over this project
 to someone. It might also get merged in rhex one day.
