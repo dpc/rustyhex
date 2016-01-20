@@ -5,6 +5,9 @@
 ## Introduction
 Simple roguelike written in [Rust][rust-home].
 
+It's a spinoff of [rhex][rhex], but while [rhex][rhex] uses traditional command
+line display, rustyhex uses OpenGL.
+
 It's intendent to exercise my [Rust][rust-home] knowledge and let me play with
 certain mechanisms that I'd like to see in roguelike game:
 
@@ -13,6 +16,16 @@ certain mechanisms that I'd like to see in roguelike game:
 * tick system with actions having delay and duration
 
 [rust-home]: http://rust-lang.org
+[rhex]: https://github.com/dpc/rhex
+
+### Note
+
+I am not actively working on this project as I lack skill and time to
+develop satisfying OpenGL UI. [rhex][rhex] is the primary place where
+I work on this idea.
+
+I'm still interested in PRs or even completely handing over this project
+to someone. It might also get merged in rhex one day.
 
 ## Overview
 
